@@ -80,6 +80,19 @@ npm run dev
 
 约定：后端配置写在本项目内 config 文件（本地明文，便于 `go run` 直接启动），不依赖临时注入环境变量；真实密码、密钥由使用者自行填写，仓库不提交敏感凭据。
 
+### 本地配置
+
+仓库出于安全考虑**不提交任何真实凭据**，仅提供配置模板。clone 后请按以下步骤填写本机配置：
+
+1. **后端**：复制 `smart_lockers/config/config.example.yaml` 为 `smart_lockers/config/config.yaml`，然后编辑 `config.yaml`：
+   - `database.dsn`：把 `<DB_USER>`、`<DB_PASSWORD>`、`<DB_HOST>`、`<DB_PORT>`、`<DB_NAME>` 替换为本机 MySQL 的账号、密码、地址、端口与库名（如 `root:your_pwd@tcp(127.0.0.1:3306)/smart_lockers?charset=utf8mb4&parseTime=True&loc=Local`）；建库建表可执行 `smart_lockers/scripts/init.sql`。
+   - `redis.addr` / `redis.password`：填入本机 Redis 地址与密码（无密码则留空 `""`）。
+   - `jwt.secret`：替换为自行生成的随机密钥（如 `openssl rand -hex 32`），切勿使用模板占位符。
+2. **前端**：如需自定义 API 目标，复制 `smart_lockers_frontend/.env.example` 为 `.env.development`（或 `.env.production`），按需修改 `VITE_API_TARGET`（默认 `/api/v1` 经 Vite 代理转发到后端 `:18080`）。
+3. **数字人子模块（工单07）**：复制 `digital_human/.env.example` 为 `.env.local`，填入真实的 Coze Bot ID 与 Token。
+
+> 说明：`config.yaml`、`.env`、`.env.*` 已被 `.gitignore` 排除，仅 `*.example` 模板入库。模板中均为占位符，不含任何真实密码或密钥。
+
 ## 六、开发规范
 
 开发前先读 [`AGENT.MD`](AGENT.MD) 与 `.agent/` 分规则。硬性要求包括：代码注释标注工单编号、单测覆盖率 ≥70%、统一错误码与日志、接口压测报告、资金/状态变更接口的事务与幂等、敏感信息脱敏与审计。
