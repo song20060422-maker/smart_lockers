@@ -1,0 +1,29 @@
+{
+  "_ticket": "07-数字人Coze：插件定义——消息转发 / 语音输出 / API调用 / 数字人动作触发",
+  "plugins": [
+    {
+      "name": "message_forward",
+      "description": "前端用户消息上行与智能体回复下行的统一转发通道",
+      "direction": "bidirectional",
+      "params": { "role": "string", "content": "string", "type": "text|voice", "timestamp": "number" }
+    },
+    {
+      "name": "tts_output",
+      "description": "智能体文本回复转语音输出，前端据此驱动 SpeechSynthesis/第三方 TTS",
+      "direction": "outbound",
+      "params": { "text": "string", "voice": "string", "emotion": "string" }
+    },
+    {
+      "name": "api_call",
+      "description": "智能体调用外部 API（寄存点查询、订单状态等只读能力）",
+      "direction": "outbound",
+      "params": { "endpoint": "string", "method": "GET|POST", "payload": "object" }
+    },
+    {
+      "name": "live2d_action_trigger",
+      "description": "根据回复情绪/场景下发 Live2D 动作指令（ nod/smile/shake/transform 等）",
+      "direction": "outbound",
+      "params": { "action": "string", "emotion": "string", "duration_ms": "number" }
+    }
+  ]
+}

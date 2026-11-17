@@ -1,0 +1,17 @@
+{
+  "_ticket": "07-数字人Coze：主工作流 + 多轮对话分支（问候→意图识别→知识库→响应→动作）",
+  "workflow": {
+    "name": "digital_human_main_flow",
+    "nodes": [
+      { "id": "greeting", "type": "start", "label": "问候", "next": "intent" },
+      { "id": "intent", "type": "intent_recognition", "label": "意图识别", "branches": ["faq", "chitchat", "emotion"] },
+      { "id": "faq", "type": "knowledge_retrieval", "label": "知识库检索", "kb": "locker_faq", "next": "response" },
+      { "id": "chitchat", "type": "llm", "label": "闲聊", "next": "response" },
+      { "id": "emotion", "type": "emotion_detect", "label": "情绪检测", "next": "response" },
+      { "id": "response", "type": "output", "label": "响应输出", "attach": ["emotion", "scene", "task"], "memory": "context_window" },
+      { "id": "action", "type": "plugin", "label": "动作下发", "plugin": "live2d_action_trigger" }
+    ],
+    "context_memory": { "enabled": true, "strategy": "sliding_window", "max_turns": 10 },
+    "fallback": { "on_error": "friendly_retry", "on_low_confidence": "ask_clarification" }
+  }
+}

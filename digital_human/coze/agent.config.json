@@ -1,0 +1,17 @@
+{
+  "_ticket": "07-数字人Coze：Coze 智能体主配置（插件 + 工作流 + 知识库）",
+  "agent": {
+    "name": "智能快寄柜数字人助手",
+    "description": "面向智能快寄柜场景的 Live2D 数字人对话智能体，支持问候、FAQ、闲聊、情绪响应。",
+    "model": "coze-default",
+    "locale": "zh-CN"
+  },
+  "plugins": ["./plugins.json"],
+  "workflow": "./workflow.json",
+  "knowledge_base": "./knowledge_base.json",
+  "communication": {
+    "protocol": ["WebSocket", "RESTful"],
+    "message_schema": { "role": "user|assistant", "content": "string", "type": "text|voice|command", "timestamp": "number" }
+  },
+  "security": { "auth": "token", "cors": "allowlist", "rate_limit_rpm": 60 }
+}

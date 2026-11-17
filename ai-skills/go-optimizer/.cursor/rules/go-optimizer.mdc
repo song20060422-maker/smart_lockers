@@ -1,0 +1,16 @@
+---
+description: "@ticket 09 Go项目优化分析：基于当前Go项目上下文触发性能/并发/架构/依赖优化审查，输出统一结构。"
+globs: ["**/*.go", "go.mod", "go.sum"]
+alwaysApply: false
+---
+
+<!-- @ticket 09：Cursor 触发规则——导入后在项目内用 @go-project-optimizer 或输入触发语义调用 -->
+
+# Go 项目优化 Skill（工单 09 / Cursor）
+
+当用户请求 Go 项目优化分析时：
+1. 读取 [SKILL.md](../SKILL.md) 获取主流程与统一输出要求。
+2. 依据分析目标加载对应子 Skill（skills/ 下四个维度）。
+3. 必须基于当前项目真实上下文（go.mod、目录结构、目标文件、git diff），禁止模板化建议。
+4. 严格按 [output-template.md](../output-template.md) 输出，逐条标注问题类型、风险等级、工程背景、可执行建议。
+5. 信息不足时明确列出缺口，不臆断。
