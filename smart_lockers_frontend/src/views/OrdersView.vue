@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 05-订单查看与取出：进行中聚合 + 游标分页订单列表
+// @proto 原型对齐：v-orders 存取订单；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { orderList, ongoingOrders } from '@/api/order'

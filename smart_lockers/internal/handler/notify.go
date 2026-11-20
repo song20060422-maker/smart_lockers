@@ -1,4 +1,5 @@
 // @ticket 01-消息通知：发送/记录/监控/场景 HTTP handler
+// @proto 原型对齐：notify 通知中心 / alarm 告警中心(场景通知)；见 AGENT.MD 2.1
 package handler
 
 import (

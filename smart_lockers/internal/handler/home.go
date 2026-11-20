@@ -1,4 +1,5 @@
 // @ticket 03-首页：定位/城市/寄存点/指南 HTTP handler
+// @proto 原型对齐：v-sites 网点柜组监控(NearbySites)；见 AGENT.MD 2.1
 package handler
 
 import (

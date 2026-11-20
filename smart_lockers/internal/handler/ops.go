@@ -1,4 +1,5 @@
 // @ticket 08-性能调优：pprof/expvar 性能分析接口，需鉴权且限制内网访问，采样开销<3%
+// @proto 原型对齐：ops 远程运维(本文件为性能观测接口) / overview 运营总览；见 AGENT.MD 2.1
 package handler
 
 import (

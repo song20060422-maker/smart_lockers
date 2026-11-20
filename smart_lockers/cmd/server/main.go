@@ -17,6 +17,11 @@ func main() {
 	// 数据库/Redis（连接失败仅告警，保证 go run 可启动）@ticket 00-project
 	pkg.InitDB(cfg.Database.DSN, cfg.Database.MaxOpenConns, cfg.Database.MaxIdleConns, cfg.Database.ConnMaxLifetimeS)
 	pkg.InitRedis(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	if err := pkg.InitAlipay(cfg.Alipay); err != nil {
+		log.Printf("[WARN] alipay client init failed: %v", err)
+	} else {
+		log.Printf("[INFO] alipay client ready (sandbox=%v)", cfg.Alipay.Sandbox)
+	}
 
 	// 性能分析采样：block profile（开销<3%）@ticket 08-性能调优
 	runtime.SetBlockProfileRate(1)

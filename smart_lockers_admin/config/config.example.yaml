@@ -1,0 +1,32 @@
+# B端管理后台配置模板（config.example.yaml）
+# 使用：复制为同目录 config.yaml，将 <...> 占位符替换为本机实际值。
+# 禁止把真实密码、密钥提交仓库；生产用密管/环境变量覆盖。
+
+server:
+  addr: ":18081"          # B端后端端口，避开主站 :18080
+  mode: "debug"           # debug / release
+
+jwt:
+  secret: "<JWT_SECRET>"  # 请自行生成：openssl rand -hex 32
+  expire_hours: 24
+
+# B端演示账号（仅占位示例，非真实凭据）。真实账号走数据库/密管。
+demo_admins:
+  - username: "operator"
+    password: "<DEMO_PASSWORD>"
+    role: "operator"       # 平台运营
+    site_id: 0
+  - username: "site_admin"
+    password: "<DEMO_PASSWORD>"
+    role: "site_admin"     # 网点管理员
+    site_id: 1001
+  - username: "user"
+    password: "<DEMO_PASSWORD>"
+    role: "user"           # 普通用户
+    site_id: 0
+
+# 可配置化：告警级别、对账容差、审计保留条数 @ticket B端-可配置化
+policy:
+  alarm_levels: "info,warn,critical"
+  reconcile_tolerance_fen: 0
+  audit_max_records: 500

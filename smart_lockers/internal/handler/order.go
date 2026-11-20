@@ -1,4 +1,5 @@
 // @ticket 05-订单查看与取出：列表/详情/临时开柜/补缴/聚合 HTTP handler
+// @proto 原型对齐：v-orders 存取订单 / v-opendoor 异常开门(临时开柜授权)；见 AGENT.MD 2.1
 package handler
 
 import (

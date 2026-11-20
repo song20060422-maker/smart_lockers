@@ -1,4 +1,5 @@
 // @ticket 06-个人中心：头像/服务/卡券/退出登录 HTTP handler
+// @proto 原型对齐：v-marketing 营销奖促中心(卡券 Coupons)；见 AGENT.MD 2.1
 package handler
 
 import (

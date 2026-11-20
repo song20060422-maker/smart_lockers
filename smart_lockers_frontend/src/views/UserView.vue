@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 06-个人中心：登录/头像/我的服务/卡券/退出
+// @proto 原型对齐：v-marketing 营销奖促中心(卡券)；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'

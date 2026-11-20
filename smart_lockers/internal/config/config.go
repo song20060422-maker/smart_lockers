@@ -15,6 +15,7 @@ type Config struct {
 	JWT      JWTConfig      `yaml:"jwt"`
 	Notify   NotifyConfig   `yaml:"notify"`
 	Billing  BillingConfig  `yaml:"billing"`
+	Alipay   AlipayConfig   `yaml:"alipay"`
 }
 
 type ServerConfig struct {
@@ -50,6 +51,16 @@ type BillingConfig struct {
 	Currency string `yaml:"currency"`
 }
 
+// AlipayConfig 支付宝支付配置：私钥/公钥仅从被 gitignore 排除的 config.yaml 读取 @ticket 02-支付宝支付
+type AlipayConfig struct {
+	AppID      string `yaml:"app_id"`
+	PrivateKey string `yaml:"private_key"`
+	PublicKey  string `yaml:"public_key"`
+	NotifyURL  string `yaml:"notify_url"`
+	ReturnURL  string `yaml:"return_url"`
+	Sandbox    bool   `yaml:"sandbox"`
+}
+
 var (
 	once sync.Once
 	cfg  *Config
@@ -78,6 +89,7 @@ func defaults() *Config {
 		JWT:      JWTConfig{Secret: "smart_lockers_local_dev_secret", ExpireHours: 24},
 		Notify:   NotifyConfig{DedupeWindowSec: 60, MaxRetry: 3, Channels: map[string]bool{"inapp": true}},
 		Billing:  BillingConfig{Currency: "CNY"},
+		Alipay:   AlipayConfig{Sandbox: true},
 	}
 }
 

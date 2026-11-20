@@ -1,4 +1,5 @@
 // @ticket 00-project：handler 公共响应辅助
+// @proto 原型对齐：无直接对应(公共响应辅助)；见 AGENT.MD 2.1
 package handler
 
 import (

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 03-首页：定位/城市选择/附近寄存点/寄存指南
+// @proto 原型对齐：v-sites 网点柜组监控；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { locate, searchCities, nearbySites, getGuide } from '@/api/home'

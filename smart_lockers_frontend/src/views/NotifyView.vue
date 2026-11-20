@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 01-消息通知：发送/记录/监控/场景
+// @proto 原型对齐：notify 通知中心 / alarm 告警中心；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { sendNotify, sendScene, notifyRecords, notifyMonitor, notifyScenes } from '@/api/notify'
 import type { NotifyRecordsResult, MonitorResult, Scene } from '@/types'

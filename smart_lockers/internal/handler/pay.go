@@ -1,7 +1,9 @@
 // @ticket 02-支付宝支付：余额/明细/充值/记录/回调 HTTP handler
+// @proto 原型对齐：无直接对应(用户侧支付能力，原型未单列视图)；见 AGENT.MD 2.1
 package handler
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -63,4 +65,41 @@ func RechargeCallback(c *gin.Context) {
 		Signature: req.Signature, IdempotencyKey: idemKey(c),
 	})
 	respond(c, data, code)
+}
+
+// AlipayNotify @ticket 02-支付宝支付：POST /api/v1/pay/alipay/notify（form-urlencoded + RSA2 验签）
+// 验签通过后才进入幂等入账；按支付宝规范仅返回纯文本 success / failure
+func AlipayNotify(c *gin.Context) {
+	if err := c.Request.ParseForm(); err != nil {
+		c.String(200, "failure")
+		return
+	}
+	if err := pkg.VerifyAlipayNotify(c.Request.Form); err != nil {
+		pkg.Logf("[WARN] alipay notify verify failed: %v", err)
+		c.String(200, "failure")
+		return
+	}
+	chargeNo := c.PostForm("out_trade_no")
+	tradeNo := c.PostForm("trade_no")
+	status := c.PostForm("trade_status")
+	total := c.PostForm("total_amount")
+	if chargeNo == "" || tradeNo == "" || (status != "TRADE_SUCCESS" && status != "TRADE_FINISHED") {
+		c.String(200, "failure")
+		return
+	}
+	amountF, err := strconv.ParseFloat(total, 64)
+	if err != nil || amountF <= 0 {
+		c.String(200, "failure")
+		return
+	}
+	amount := int64(math.Round(amountF * 100)) // 元 -> 分 @ticket 02-支付宝支付
+	_, code := service.RechargeCallback(service.RechargeCallbackInput{
+		ChargeNo: chargeNo, TradeNo: tradeNo, Amount: amount,
+		Signature: c.PostForm("sign"), IdempotencyKey: chargeNo,
+	})
+	if code != pkg.CodeOK {
+		c.String(200, "failure")
+		return
+	}
+	c.String(200, "success")
 }

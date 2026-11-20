@@ -52,7 +52,8 @@ func Setup() *gin.Engine {
 		pay.GET("/balance/logs", middleware.Auth(), handler.BalanceLogs)
 		pay.POST("/recharge", middleware.Auth(), handler.CreateRecharge)
 		pay.GET("/recharge/records", middleware.Auth(), handler.RechargeRecords)
-		pay.POST("/alipay/callback", handler.RechargeCallback) // 回调走签名校验，非用户令牌
+		pay.POST("/alipay/callback", handler.RechargeCallback) // 兼容本地 JSON 回调
+		pay.POST("/alipay/notify", handler.AlipayNotify)       // 支付宝官方异步通知（form + RSA2 验签）
 	}
 
 	// 工单05 订单查看与取出（全部鉴权）

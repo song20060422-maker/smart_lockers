@@ -1,4 +1,5 @@
 // @ticket 04-物品寄存：柜子/试算/落单/换柜 HTTP handler
+// @proto 原型对齐：v-fee 网点收费规则(QuoteFee) / v-orders 存取订单落单；见 AGENT.MD 2.1
 package handler
 
 import (

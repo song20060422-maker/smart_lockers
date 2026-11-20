@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"smart_lockers/internal/config"
 	"smart_lockers/internal/model"
 	"smart_lockers/internal/pkg"
 )
@@ -51,7 +52,19 @@ func CreateRecharge(userID uint, amount int64) (map[string]interface{}, int) {
 			return nil, pkg.ErrInternal
 		}
 	}
-	return map[string]interface{}{"charge_no": chargeNo, "amount": amount, "status": 1}, pkg.CodeOK
+	// 生成支付宝沙箱支付链接（SDK 本地签名，无需出站调用）@ticket 02-支付宝支付
+	out := map[string]interface{}{"charge_no": chargeNo, "amount": amount, "status": 1}
+	if pkg.AlipayReady() {
+		cfg := config.Get().Alipay
+		payURL, err := pkg.CreateAlipayPagePayURL(cfg, chargeNo, amount, "账户充值")
+		if err != nil {
+			pkg.Logf("[WARN] create alipay pay url: %v", err)
+		} else {
+			out["pay_url"] = payURL
+			out["pay_channel"] = map[bool]string{true: "alipay_sandbox", false: "alipay_production"}[cfg.Sandbox]
+		}
+	}
+	return out, pkg.CodeOK
 }
 
 // RechargeRecords 充值记录查询 @ticket 02-支付宝支付
