@@ -1,13 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: b2aa3b4cd48b832ce0392d027319fcdd_8574eeede27c11f19919525400638852
-    ReservedCode1: nF3AhavtcWkktboyURDWXTYYHPbzcqSsXlguXGoX85bt5+pzztLTN4yl9fXplcylxb6d8zmUShFZCX/U5FttDt6sjo4EfL8Ut7dddKp1ZI1rG9YkcMkKgJdnObuoN2I9QD5zwM+lQoxMwRxdK2RwsHkYahwfISC8bgs6EMUljFQRoVKeyvsshUGsVMQ=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: b2aa3b4cd48b832ce0392d027319fcdd_8574eeede27c11f19919525400638852
-    ReservedCode2: nF3AhavtcWkktboyURDWXTYYHPbzcqSsXlguXGoX85bt5+pzztLTN4yl9fXplcylxb6d8zmUShFZCX/U5FttDt6sjo4EfL8Ut7dddKp1ZI1rG9YkcMkKgJdnObuoN2I9QD5zwM+lQoxMwRxdK2RwsHkYahwfISC8bgs6EMUljFQRoVKeyvsshUGsVMQ=
----
 
 # 00 · 项目全局规则
 
@@ -25,7 +15,12 @@ AIGC:
 - 前端建议：`src/`（views / components / api / stores / router / utils / types）。
 - 命名：Go 包/文件小写下划线或短名，导出符号大驼峰；前端组件大驼峰、目录小写中划线。接口路径、字段名全项目统一风格（snake_case 或 camelCase 二选一，全局一致）。
 
-## 3. 工单编号注释（强制）
+### 2.1 原型对齐
+- 业务/接口设计须对齐 `D:\Users\Lenovo\Desktop\smart_parcel_locker` 小程序代码与 `智能快递柜IoT运营中台原型.html`（16 视图）；视图与代码模块映射见 `../AGENT.MD` 第 2.1 节。
+- 代码关键逻辑处除 `@ticket` 工单编号外，涉及原型视图的文件须标注 `// @proto 原型对齐：<视图标识与能力>`。
+- 原型的运营中台专属视图（overview/devices/ota/mqtt/arch/v-revenue/v-syscfg/v-perm 等）不在用户侧 10 工单范围，无对应实现时如实标注「无直接对应」，禁止臆造接口或字段。
+
+## 3. 工单编号注释
 
 - 每个工单新增/修改的源文件，关键逻辑处必须有注释标注工单编号，格式建议：`// @ticket 04-物品寄存：<说明>` / `// @ticket 05-订单查看与取出：<说明>`。
 - 10 个工单备注均明确要求"代码注释中需要写明工单编号"，缺失视为不合格。
@@ -53,4 +48,3 @@ AIGC:
 - 不臆造接口、字段、指标；一切结论来自工单原文或真实代码。
 - 不修改 `.git`、不提交 `.env`/私钥等敏感文件（见 `.gitignore`）。
 - 一次只推进一个工单，做完即交付并标注工单编号。
-*（内容由AI生成，仅供参考）*
