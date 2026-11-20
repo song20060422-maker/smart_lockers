@@ -36,3 +36,13 @@ notify:
 # 收费规则基础配置（工单04，实际以数据表为准）
 billing:
   currency: "CNY"
+
+# 支付宝支付配置（工单02）。敏感字段只允许写入被 .gitignore 排除的 config.yaml，禁止提交仓库。
+# 沙箱网关由 SDK 自动选择官方地址 https://openapi-sandbox.dl.alipaydev.com/gateway.do
+alipay:
+  app_id: "<ALIPAY_APP_ID>"
+  private_key: "<APP_PRIVATE_KEY_PKCS1_OR_PKCS8_BASE64>"
+  public_key: "<ALIPAY_PUBLIC_KEY_PKIX_BASE64>"
+  notify_url: "https://<YOUR_DOMAIN>/api/v1/pay/alipay/notify"
+  return_url: ""
+  sandbox: true

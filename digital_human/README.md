@@ -39,4 +39,3 @@ AIGC:
 
 ## 五、验证命令
 `npm run typecheck`（类型检查）、`npm run build`（构建）、`npm run test:integration`（联调桩）、`npm run test:perf`（性能桩）。
-*（内容由AI生成，仅供参考）*
