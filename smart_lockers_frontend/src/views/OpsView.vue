@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 08-性能调优：pprof/trace/expvar 运维观测入口（需鉴权 + 内网）
+// @proto 原型对齐：ops 远程运维(性能采样观测)；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { health, opsPprof, opsTrace, opsExpvar } from '@/api/ops'
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 05-订单查看与取出：详情/临时开柜/超时补交/完成
+// @proto 原型对齐：v-orders 存取订单详情 / v-opendoor 临时开柜；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { orderDetail, openAuth, makeup, completeOrder } from '@/api/order'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 04-物品寄存：选柜/时长/优惠券/费用试算/落单/换柜
+// @proto 原型对齐：v-fee 网点收费规则 / v-opendoor 异常换柜；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { queryCabinets, quoteFee, createDeposit, changeCabinet } from '@/api/deposit'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // @ticket 02-支付宝支付：余额/明细/充值/充值记录
+// @proto 原型对齐：无直接对应(用户侧支付能力，原型未单列视图)；见 AGENT.MD 2.1
 import { ref, onMounted } from 'vue'
 import { getBalance, balanceLogs, createRecharge, rechargeRecords } from '@/api/pay'
 import type { BalanceResult, BalanceLog, RechargeOrder } from '@/types'
