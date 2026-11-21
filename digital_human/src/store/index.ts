@@ -2,29 +2,75 @@
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { ChatMessage, Live2DAction } from '@/types'
 
+// 定义接口，约束对象的结构：interface HubState {
+
 interface HubState {
+  // 定义对象属性 messages，取值为 ChatMessage[]
+
   messages: ChatMessage[]
+  // 定义对象属性 connected，取值为 boolean
+
   connected: boolean
+  // 定义对象属性 thinking，取值为 boolean
+
   thinking: boolean
+  // 定义对象属性 action，取值为 Live2DAction | null
+
   action: Live2DAction | null
+  // 定义对象属性 error，取值为 string | null
+
   error: string | null
+// 当前代码块结束
+
 }
+
+// 声明变量 initialState: HubState = { messages: [], connected: false, thinking: false, action: null, error: null }，用于保存数据或函数引用
 
 const initialState: HubState = { messages: [], connected: false, thinking: false, action: null, error: null }
 
+// 声明变量 hubSlice = createSlice({，用于保存数据或函数引用
+
 const hubSlice = createSlice({
+  // 定义对象属性 name，取值为 'hub'
+
   name: 'hub',
+  // 执行 initialState,，实现对应的前端逻辑
+
   initialState,
+  // 定义对象属性 reducers，取值为 {
+
   reducers: {
+    // 调用 appendMessage(state, a: PayloadAction<ChatMessage>) { state.messages.push(a.payload) },，触发对应功能
+
     appendMessage(state, a: PayloadAction<ChatMessage>) { state.messages.push(a.payload) },
+    // 赋值更新：setConnected(state, a: PayloadAction<boolean>) { state.connected = a.payload },
+
     setConnected(state, a: PayloadAction<boolean>) { state.connected = a.payload },
+    // 赋值更新：setThinking(state, a: PayloadAction<boolean>) { state.thinking = a.payload },
+
     setThinking(state, a: PayloadAction<boolean>) { state.thinking = a.payload },
+    // 赋值更新：setAction(state, a: PayloadAction<Live2DAction | null>) { state.action = a.payload },
+
     setAction(state, a: PayloadAction<Live2DAction | null>) { state.action = a.payload },
+    // 赋值更新：setError(state, a: PayloadAction<string | null>) { state.error = a.payload },
+
     setError(state, a: PayloadAction<string | null>) { state.error = a.payload },
+  // 定义结束
+
   },
+// 执行 })，实现对应的前端逻辑
+
 })
 
+// 导出 const { appendMessage, setConnected, setThinking, setAction, setError } = hubSlice.actions，供其他模块引用
+
 export const { appendMessage, setConnected, setThinking, setAction, setError } = hubSlice.actions
+// 导出 const store = configureStore({ reducer: { hub: hubSlice.reducer } })，供其他模块引用
+
 export const store = configureStore({ reducer: { hub: hubSlice.reducer } })
+// 导出 type RootState = ReturnType<typeof store.getState>，供其他模块引用
+
 export type RootState = ReturnType<typeof store.getState>
+// 导出 type AppDispatch = typeof store.dispatch，供其他模块引用
+
 export type AppDispatch = typeof store.dispatch

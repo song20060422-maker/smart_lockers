@@ -196,3 +196,58 @@ INSERT IGNORE INTO city (name, pinyin, initial, is_hot, sort, location) VALUES
   ('郑州', 'zhengzhou', 'Z', 1, 1, '34.7466,113.6254'),
   ('北京', 'beijing', 'B', 1, 2, '39.9042,116.4074'),
   ('上海', 'shanghai', 'S', 1, 3, '31.2304,121.4737');
+
+-- ============================================================
+-- 补齐种子数据 @ticket 00-project：使 17 张表联调可跑（幂等 INSERT IGNORE）
+-- 所有 seed 使用固定 ID/唯一键，重复执行不产生重复数据
+-- ============================================================
+INSERT IGNORE INTO guide (id, version, lang, content, is_current) VALUES
+  (1, 'v1.0', 'zh-CN', '寄存流程：选择寄存点 → 选择柜门 → 支付下单 → 存入物品 → 取件时输入订单号。', 1);
+
+INSERT IGNORE INTO user_profile (id, phone, nickname, avatar, role, status, token_ver) VALUES
+  (10001, '13800138000', '演示用户', '', 'user', 1, 0);
+
+INSERT IGNORE INTO locker_site (id, city_id, name, address, lat, lng, open_time, close_time, status) VALUES
+  (1, 1, '郑州东站寄存点', '郑州市金水区郑州东站候车厅', 34.7521, 113.7762, '06:00', '23:00', 1),
+  (2, 1, '二七广场寄存点', '郑州市二七区二七广场地铁站A口', 34.7466, 113.6254, '07:00', '22:00', 1);
+
+INSERT IGNORE INTO locker_cabinet (id, site_id, code, size, total, available, status) VALUES
+  (1, 1, 'ZDA-A', 'medium', 12, 8, 1),
+  (2, 2, 'EQQ-A', 'small', 20, 15, 1);
+
+INSERT IGNORE INTO locker_door (id, cabinet_id, code, size, status, version) VALUES
+  (1, 1, 'ZDA-A-01', 'medium', 0, 0),
+  (2, 1, 'ZDA-A-02', 'medium', 0, 0),
+  (3, 2, 'EQQ-A-01', 'small', 0, 0);
+
+INSERT IGNORE INTO deposit_order (id, order_no, user_id, door_id, site_id, start_time, end_time, amount, deposit, status, idempotency_key) VALUES
+  (1, 'DEP202611200001', 10001, 1, 1, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR), 300, 0, 1, 'seed-dep-001');
+
+INSERT IGNORE INTO temp_open_auth (id, order_no, token, max_times, used_times, expire_at, used) VALUES
+  (1, 'DEP202611200001', 'seed-open-token-001', 3, 0, DATE_ADD(NOW(), INTERVAL 2 HOUR), 0);
+
+INSERT IGNORE INTO account (id, user_id, balance) VALUES
+  (1, 10001, 10000);
+
+INSERT IGNORE INTO balance_log (id, user_id, change_amount, balance_after, biz_type, biz_no) VALUES
+  (1, 10001, 10000, 10000, 'recharge', 'SEED-RC-001');
+
+INSERT IGNORE INTO recharge_order (id, charge_no, user_id, amount, status, trade_no) VALUES
+  (1, 'RC202611200001', 10001, 10000, 2, 'SEED-TRADE-001');
+
+INSERT IGNORE INTO coupon (id, code, user_id, discount, scope, expire_at, used) VALUES
+  (1, 'NEWUSER5', 10001, 500, 'deposit', DATE_ADD(NOW(), INTERVAL 30 DAY), 0),
+  (2, 'WELCOME2', 10001, 200, 'deposit', DATE_ADD(NOW(), INTERVAL 30 DAY), 0);
+
+INSERT IGNORE INTO my_service (id, code, name, url, perm, roles, enabled) VALUES
+  (1, 'my_orders', '我的订单', '/orders', 'order:list', 'user', 1),
+  (2, 'my_coupons', '我的卡券', '/coupons', 'coupon:list', 'user', 1),
+  (3, 'my_service', '我的服务', '/services', 'service:list', 'user', 1);
+
+INSERT IGNORE INTO notify_template (id, code, channel, content, variables, enabled) VALUES
+  (1, 'order_created', 'site', '您的寄存订单已创建，订单号：{{order_no}}', 'order_no', 1),
+  (2, 'order_open', 'site', '取件授权已生成，请及时取件。', 'order_no', 1);
+
+INSERT IGNORE INTO notify_message (id, tpl_code, receiver_type, receiver_id, channel, content, status, retry_count, dedupe_key) VALUES
+  (1, 'order_created', 'user', 10001, 'site', '您的寄存订单已创建，订单号：DEP202611200001', 1, 0, 'seed-notify-001');
+

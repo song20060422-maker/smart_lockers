@@ -1,4 +1,6 @@
 <template>
+  <!-- 路由视图出口，渲染当前匹配路由所对应的组件内容 -->
+
   <router-view />
 </template>
 <script setup lang="ts">
