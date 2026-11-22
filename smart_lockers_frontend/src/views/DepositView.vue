@@ -6,6 +6,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { queryCabinets, quoteFee, createDeposit, changeCabinet } from '@/api/deposit'
 import { myCoupons } from '@/api/user'
 import type { Cabinet, FeeResult, Coupon } from '@/types'
+// 新增统一券数据工具：归一化后端 {available,expired} 对象并对空值做防御，杜绝 -NaN元
+import { normalizeCoupons, couponOptionText, type NormalizedCoupon } from '@/utils/coupon'
 
 // 声明变量 route = useRoute()，用于保存数据或函数引用
 
@@ -19,9 +21,9 @@ const siteId = Number(route.query.site_id || 0)
 // 声明变量 cabinets = ref<Cabinet[]>([])，用于保存数据或函数引用
 
 const cabinets = ref<Cabinet[]>([])
-// 声明变量 coupons = ref<Coupon[]>([])，用于保存数据或函数引用
+// 声明变量 coupons = ref<NormalizedCoupon[]>([])，统一券口径；原 Coupon 类型保留以兼容其它逻辑
 
-const coupons = ref<Coupon[]>([])
+const coupons = ref<NormalizedCoupon[]>([])
 // 声明变量 doorId = ref<number>(0)，用于保存数据或函数引用
 
 const doorId = ref<number>(0)
@@ -53,9 +55,9 @@ onMounted(async () => {
     // 等待异步操作完成：cabinets.value = await queryCabinets({ site_id: siteId })
 
     cabinets.value = await queryCabinets({ site_id: siteId })
-    // 等待异步操作完成：coupons.value = await myCoupons()
+    // 等待异步操作完成：coupons.value = normalizeCoupons(await myCoupons())，统一券口径并空值防御
 
-    coupons.value = await myCoupons()
+    coupons.value = normalizeCoupons(await myCoupons())
   // 捕获上述逻辑抛出的异常并进行错误处理
 
   } catch (e) { err.value = (e as Error).message }
@@ -221,9 +223,9 @@ function fen(v: number): string { return (v / 100).toFixed(2) }
             <!-- 下拉选项，值为 undefined，显示“不使用” -->
 
             <option :value="undefined">不使用</option>
-            <!-- 基于 coupons 数组循环生成优惠券选项，key 取 c.id，值为 c.id，显示编码 c.code 与经 fen 格式化的优惠金额 -->
+            <!-- 基于 coupons 数组循环生成优惠券选项，使用统一面值文案，杜绝 -NaN元 -->
 
-            <option v-for="c in coupons" :key="c.id" :value="c.id">{{ c.code }} -{{ fen(c.discount) }}元</option>
+            <option v-for="c in coupons" :key="c.id" :value="c.id">{{ couponOptionText(c) }}</option>
           <!-- 闭合优惠券下拉框 select 元素 -->
 
           </select>
