@@ -3,9 +3,11 @@
 // @proto 原型对齐：05-寄存指南长图、04-一期用户界面-6、06-用户界面规划-12 寄存指南图文步骤
 import { ref, onMounted } from 'vue'
 import { getGuide } from '@/api/home'
+// 引入原型图 05 提取的 6 步图文与温馨提示，用于接口内容偏少时补齐
+import { protoSteps, protoTips, type GuideStep } from '@/data/guideSteps'
 // 执行 interface Step { title: string; desc: string }，实现对应的前端逻辑
 
-interface Step { title: string; desc: string }
+interface Step { title: string; desc: string; visual?: string[] }
 // 声明变量 defaultSteps:，用于保存数据或函数引用
 
 const defaultSteps: Step[] = [
@@ -57,6 +59,30 @@ function parseContent(content: string): Step[] {
   // 返回 parsed 给调用方
 
   return parsed
+// 当前代码块结束
+
+}
+// 补缺函数：以现有步骤为基础，不足原型 6 步时用原型图 05 的图文步骤补齐，不覆盖已有步骤
+
+function fillSteps(base: Step[]): Step[] {
+  // 复制现有步骤，避免修改原数组
+
+  const merged: Step[] = base.slice()
+  // 从现有长度补齐到原型步骤总数
+
+  for (let i = merged.length; i < protoSteps.length; i++) {
+    // 当前补齐项的原型来源
+
+    const proto: GuideStep = protoSteps[i]
+    // 追加原型步骤（标题/说明/示意图要点），保留 base 既有内容不动
+
+    merged.push({ title: proto.title, desc: proto.desc, visual: proto.visual })
+  // 当前代码块结束
+
+  }
+  // 返回补齐后的步骤数组
+
+  return merged
 // 当前代码块结束
 
 }
@@ -119,22 +145,36 @@ onMounted(load)
     <p v-if="tip" class="tip">{{ tip }}</p>
     <!-- div 元素，class 为 step -->
 
-    <div v-for="(s, i) in steps" :key="i" class="step">
+    <!-- 基于 steps 补齐后的 6 步循环生成步骤图文，key 取索引 -->
+
+    <div v-for="(s, i) in fillSteps(steps)" :key="i" class="step">
       <!-- div 元素，class 为 step-title -->
 
       <div class="step-title">{{ s.title }}</div>
       <!-- div 元素，class 为 step-desc -->
 
       <div class="step-desc">{{ s.desc }}</div>
-      <!-- div 元素，class 为 ph -->
+      <!-- 原型图 05 示意图文字要点：有 visual 时逐条展示，补齐图文 -->
 
-      <div class="ph">步骤示意图 {{ i + 1 }}</div>
+      <div v-if="s.visual && s.visual.length" class="visual">
+        <!-- 逐条展示示意图要点 -->
+
+        <span v-for="(v, vi) in s.visual" :key="vi" class="visual-line">{{ v }}</span>
+      <!-- 闭合 div 元素 -->
+
+      </div>
+      <!-- 无图文数据时的原占位框，保留既有文案 -->
+
+      <div v-else class="ph">步骤示意图 {{ i + 1 }}</div>
     <!-- 闭合 div 元素 -->
 
     </div>
-    <!-- div 元素，class 为 warn -->
+    <!-- 温馨提示（原有文案保留） -->
 
     <div class="warn">温馨提示：请勿存放贵重物品与违禁品；超时未取将按规则续费。</div>
+    <!-- 原型图 05 补充的温馨提示（只新增，不删改上方既有提示） -->
+
+    <div v-for="(t, ti) in protoTips" :key="ti" class="warn">{{ ti + 1 }}. {{ t }}</div>
   <!-- 闭合 div 元素 -->
 
   </div>
@@ -162,6 +202,15 @@ onMounted(load)
 /* .ph 样式定义 */
 
 .ph { height: 90px; border-radius: 8px; background: #eff6ff; color: #93c5fd; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+/* .visual 样式定义：原型图步骤示意图要点列表 */
+
+.visual { background: #eff6ff; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+/* .visual-line 样式定义 */
+
+.visual-line { font-size: 12px; color: #2563eb; line-height: 1.5; }
+/* .visual-line 前置圆点 */
+
+.visual-line::before { content: '· '; color: #60a5fa; }
 /* .warn 样式定义 */
 
 .warn { background: #fef3c7; color: #92400e; font-size: 12px; padding: 12px; border-radius: 8px; line-height: 1.6; }

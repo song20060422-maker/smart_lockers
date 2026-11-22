@@ -5,6 +5,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import CouponCard from '@/components/CouponCard.vue'
 import { myCoupons } from '@/api/user'
+// 引入统一券数据工具：与寄存页共用同一套归一化真实券数据
+import { normalizeCoupons, toCardCoupon } from '@/utils/coupon'
 // 执行 interface CouponItem { id?: number; code?: string; title?: string; amount?: number; discount?: number; hours?: number; expire_at?: string; scope?: string; expired?: boolean }，实现对应的前端逻辑
 
 interface CouponItem { id?: number; code?: string; title?: string; amount?: number; discount?: number; hours?: number; expire_at?: string; scope?: string; expired?: boolean }
@@ -59,9 +61,12 @@ async function load() {
     // 声明变量 res，用于保存数据或函数引用
 
     const res = await myCoupons()
-    // 赋值更新：list.value = Array.isArray(res) ? res as CouponItem[] : demoList
+    // 归一化后端 {available,expired} 对象为统一券数组，逐字段空值防御
 
-    list.value = Array.isArray(res) ? res as CouponItem[] : demoList
+    const normalized = normalizeCoupons(res)
+    // 赋值更新：真实券数据优先（与寄存页同源），为空时保留原演示券兜底，不删改既有数据
+
+    list.value = normalized.length > 0 ? normalized.map((c) => toCardCoupon(c) as CouponItem) : demoList
     // 赋值更新：tip.value = ''
 
     tip.value = ''
