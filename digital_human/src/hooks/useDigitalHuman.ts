@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import { WebSocketClient } from '@/ws/WebSocketClient'
 import { SpeechEngine } from '@/tts/speech'
 import { CONFIG, getRole } from '@/config'
-import { appendMessage, setConnected, setThinking, setAction, setError } from '@/store'
+import { appendMessage, setConnected, setThinking, setAction, setSpeaking, bumpSpeakPulse, setError } from '@/store'
 import type { ChatMessage, AgentReplyPayload } from '@/types'
 import type { AppDispatch } from '@/store'
 
@@ -46,7 +46,20 @@ export function useDigitalHuman() {
   useEffect(() => {
     // 声明变量 speech = new SpeechEngine(getRole().voice, { onRecognized: (text) => send(text, 'voice') })，用于保存数据或函数引用
 
-    const speech = new SpeechEngine(getRole().voice, { onRecognized: (text) => send(text, 'voice') })
+    const speech = new SpeechEngine(getRole().voice, {
+      // 语音识别结果回调：把识别文本作为用户消息发送
+
+      onRecognized: (text) => send(text, 'voice'),
+      // 播报开始回调：开启数字人说话口型状态
+
+      onSpeakStart: () => dispatch(setSpeaking(true)),
+      // 语音边界回调：递增计数以触发一次张口脉冲，贴合真实发音
+
+      onSpeakBoundary: () => dispatch(bumpSpeakPulse()),
+      // 播报结束回调：关闭数字人说话口型状态
+
+      onSpeakEnd: () => dispatch(setSpeaking(false)),
+    })
     // 赋值更新：speechRef.current = speech
 
     speechRef.current = speech
