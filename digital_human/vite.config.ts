@@ -27,6 +27,9 @@ export default defineConfig({
       // 执行 '/ws': { target: 'ws://localhost:18080', ws: true },，实现对应的前端逻辑
 
       '/ws': { target: 'ws://localhost:18080', ws: true },
+      // 数字人账号密码真实查库登录接口：/api → 后端 18080 @ticket 07-数字人Coze
+
+      '/api': { target: 'http://localhost:18080', changeOrigin: true },
     // 定义结束
 
     },

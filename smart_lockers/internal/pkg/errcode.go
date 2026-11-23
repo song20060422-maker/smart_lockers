@@ -92,6 +92,31 @@ const (
 	// 为 ErrNotifyTpl 赋值：16001 // 通知模板不存在
 
 	ErrNotifyTpl = 16001 // 通知模板不存在
+
+	// IoT 设备接入（19）
+	// 为 ErrDeviceNF 赋值：19001 // 设备不存在
+
+	ErrDeviceNF    = 19001 // 设备不存在
+	// 为 ErrDeviceSecret 赋值：19002 // 设备密钥校验失败
+
+	ErrDeviceSecret = 19002 // 设备密钥校验失败
+	// 为 ErrDeviceToken 赋值：19003 // 设备令牌失效
+
+	ErrDeviceToken = 19003 // 设备令牌失效
+	// 为 ErrDeviceState 赋值：19004 // 设备状态不允许该操作
+
+	ErrDeviceState = 19004 // 设备状态不允许该操作
+	// 为 ErrCmdFail 赋值：19005 // 指令下发失败
+
+	ErrCmdFail     = 19005 // 指令下发失败
+	// 为 ErrOtaNF 赋值：19006 // OTA 任务不存在
+
+	ErrOtaNF       = 19006 // OTA 任务不存在
+
+	// 数字人账号登录（07）：账号或密码不匹配（含账号不存在/禁用），统一码避免账号枚举
+	// 为 ErrDHLogin 赋值：17001 // 数字人账号或密码不正确
+
+	ErrDHLogin = 17001 // 数字人账号或密码不正确
 // 结束参数/表达式列表
 
 )
@@ -139,6 +164,14 @@ var errMessages = map[int]string{
 	// 执行 ErrNotifyTpl: "通知模板不存在",，完成对应的业务处理
 
 	ErrNotifyTpl: "通知模板不存在",
+	// 执行 ErrDeviceNF: "设备不存在", ErrDeviceSecret: "设备密钥校验失败", ErrDeviceToken: "设备令牌失效",，完成对应的业务处理
+
+	ErrDeviceNF: "设备不存在", ErrDeviceSecret: "设备密钥校验失败", ErrDeviceToken: "设备令牌失效",
+	// 执行 ErrDeviceState: "设备状态不允许该操作", ErrCmdFail: "指令下发失败", ErrOtaNF: "OTA任务不存在",，完成对应的业务处理
+
+	ErrDeviceState: "设备状态不允许该操作", ErrCmdFail: "指令下发失败", ErrOtaNF: "OTA任务不存在",
+
+	ErrDHLogin: "账号或密码不正确",
 // 当前代码块结束
 
 }

@@ -71,6 +71,11 @@ const hubSlice = createSlice({
     bumpSpeakPulse(state) { state.speakPulse += 1 },
 
     setError(state, a: PayloadAction<string | null>) { state.error = a.payload },
+
+    // 清空会话：账号切换/重连时重置对话与全部瞬时状态，避免上一个账号的欢迎语与消息残留 @ticket 07
+    // 返回全新初始对象（不复用 initialState 引用）防止后续 push 污染初始态
+
+    clearConversation() { return { messages: [], connected: false, thinking: false, action: null, speaking: false, speakPulse: 0, error: null } },
   // 定义结束
 
   },
@@ -80,7 +85,7 @@ const hubSlice = createSlice({
 
 // 导出 const { appendMessage, setConnected, setThinking, setAction, setError } = hubSlice.actions，供其他模块引用
 
-export const { appendMessage, setConnected, setThinking, setAction, setSpeaking, bumpSpeakPulse, setError } = hubSlice.actions
+export const { appendMessage, setConnected, setThinking, setAction, setSpeaking, bumpSpeakPulse, setError, clearConversation } = hubSlice.actions
 // 导出 const store = configureStore({ reducer: { hub: hubSlice.reducer } })，供其他模块引用
 
 export const store = configureStore({ reducer: { hub: hubSlice.reducer } })

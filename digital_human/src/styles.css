@@ -22,3 +22,87 @@ body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #e
 .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #dbe8f8; }
 .composer input { flex: 1; background: #ffffff; color: #23324a; border: 1px solid #d0e0f5; border-radius: 6px; padding: 8px 10px; }
 .composer button { background: #4a8fe7; color: #fff; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+
+/* ============ 数字人角色登录页 @ticket 07 ============ */
+/* 全屏登录容器：浅蓝渐变背景，内容居中 */
+.dh-login { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; background: linear-gradient(160deg, #2f7bff 0%, #1f5fe8 55%, #173d8f 100%); padding: 24px; }
+/* 标题区：白色文字居中 */
+.dh-login-head { text-align: center; color: #fff; }
+/* 大标题 */
+.dh-login-head h1 { font-size: 32px; font-weight: 800; letter-spacing: 2px; margin: 0 0 8px; }
+/* 副标题 */
+.dh-login-head p { font-size: 14px; opacity: .88; margin: 0; }
+/* 角色卡片列表：横排三卡 */
+.dh-login-cards { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; }
+/* 角色卡片：白底圆角，悬浮阴影 */
+.dh-login-card { width: 240px; background: #fff; border-radius: 16px; padding: 26px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 10px 30px rgba(10, 35, 90, .25); transition: transform .18s ease, box-shadow .18s ease; }
+/* 卡片悬浮态 */
+.dh-login-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(10, 35, 90, .32); }
+/* 图标底座 */
+.c-icon { width: 58px; height: 58px; border-radius: 50%; background: #e8f1ff; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+/* 标题 */
+.c-title { font-size: 17px; font-weight: 700; color: #111827; }
+/* 描述 */
+.c-desc { font-size: 12px; color: #6b7280; text-align: center; line-height: 1.6; }
+/* 进入文案 */
+.c-go { font-size: 13px; color: #2563eb; font-weight: 600; }
+/* 底部提示 */
+.dh-login-foot { font-size: 12px; color: rgba(255,255,255,.75); }
+
+/* 顶栏登录角色徽标：蓝底白字胶囊 */
+.role-badge { background: #2563eb; color: #fff; font-size: 12px; border-radius: 12px; padding: 3px 10px; }
+/* 顶栏数字人形象只读标签：浅灰胶囊（随场景角色自动绑定） */
+.avatar-label { background: #eef2f7; color: #6b7280; font-size: 12px; border-radius: 12px; padding: 3px 10px; }
+/* 顶栏退出按钮 */
+.logout-btn { background: transparent; border: 1px solid #d1d5db; border-radius: 12px; padding: 3px 12px; font-size: 12px; color: #6b7280; cursor: pointer; }
+
+/* ============ 账号密码登录页 @ticket 07 ============ */
+/* 全屏登录容器：浅蓝渐变背景，内容居中（与角色选择页同色系） */
+.dh-account-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, #2f7bff 0%, #1f5fe8 55%, #173d8f 100%); padding: 24px; }
+/* 登录卡片：白底圆角，柔和阴影 */
+.dh-account-card { width: 360px; max-width: 100%; background: #fff; border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(10, 35, 90, .25); }
+/* 品牌标题：居中深色 */
+.dh-account-title { font-size: 22px; font-weight: 800; color: #1c3d6e; text-align: center; }
+/* 副标题：居中浅灰 */
+.dh-account-sub { font-size: 13px; color: #6b7280; text-align: center; margin-bottom: 8px; }
+/* 表单容器：纵向排列 */
+.dh-account-form { display: flex; flex-direction: column; gap: 8px; }
+/* 输入框标签 */
+.dh-account-label { font-size: 13px; color: #374151; font-weight: 600; }
+/* 输入框：浅蓝描边 */
+.dh-account-input { background: #f7fbff; color: #23324a; border: 1px solid #d0e0f5; border-radius: 8px; padding: 10px 12px; font-size: 14px; outline: none; }
+/* 输入框聚焦态 */
+.dh-account-input:focus { border-color: #4a8fe7; box-shadow: 0 0 0 2px rgba(74,143,231,.18); }
+/* 校验失败提示：柔和红色 */
+.dh-account-error { color: #c6506a; font-size: 12px; }
+/* 登录按钮：品牌蓝 */
+.dh-account-submit { margin-top: 6px; background: #4a8fe7; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 15px; font-weight: 600; cursor: pointer; }
+/* 登录按钮悬浮态 */
+.dh-account-submit:hover { background: #2f7bff; }
+/* 演示账号填充提示按钮：浅色虚线描边 */
+.dh-account-demo { margin-top: 4px; background: #f4f8ff; color: #4a6fa5; border: 1px dashed #b9d2f0; border-radius: 8px; padding: 8px; font-size: 12px; cursor: pointer; }
+
+/* ============ 写实真人数字人舞台 @ticket 07 ============ */
+/* 舞台容器：居中展示人像，深色渐变与形象图背景自然衔接 */
+.ph-stage { flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at 50% 35%, #16304f, #0b1c33 70%); }
+/* 宿主即 .ph-stage 本身（引擎直接在其上建层，不再额外添加容器类） */
+/* 基底层：完整写实人像（background-size/position 由引擎按舞台尺寸内联设置，保证与切片对齐），transform 由引擎驱动（呼吸/点头/摇头） */
+.ph-base { position: absolute; inset: 0; transform-origin: 50% 78%; will-change: transform; transition: transform 60ms linear; }
+/* 五官切片层公共样式：绝对定位，尺寸/背景由引擎按区域标定计算 */
+.ph-slice { position: absolute; background-repeat: no-repeat; transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
+/* 嘴部切片：上边缘为形变锚点（张口向下拉伸） */
+.ph-mouth { transform-origin: 50% 0%; }
+/* 播报光环：说话时呼吸式点亮，突出"正在讲解"状态 */
+.ph-glow { position: absolute; left: 50%; bottom: 6%; width: 72%; height: 4px; transform: translateX(-50%); border-radius: 4px; background: linear-gradient(90deg, transparent, #5ea0ff, transparent); opacity: 0; transition: opacity .3s; }
+/* 光环点亮态 */
+.ph-glow.on { opacity: .85; animation: phPulse 1.2s ease-in-out infinite; }
+/* 光环呼吸动画 */
+@keyframes phPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.6); } }
+
+/* ============ 动漫全身数字人舞台 @ticket 07 ============ */
+/* 舞台容器：与姿势图浅蓝渐变背景同色系，人物像站在柜机屏内 */
+.an-stage { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #dcebfb 0%, #eef5fc 62%, #f6f9fd 100%); }
+/* 展示层：全身姿势立绘，cover 铺满舞台，完全静止（引擎 v2 不再施加任何 transform）@ticket 07 */
+.an-base { position: absolute; inset: 0; background-repeat: no-repeat; background-position: center bottom; background-size: cover; }
+/* 过渡层：动作切换时淡入目标姿势，与展示层同规格 */
+.an-fade { position: absolute; inset: 0; background-repeat: no-repeat; background-position: center bottom; background-size: cover; opacity: 0; transition: opacity .3s ease; pointer-events: none; }

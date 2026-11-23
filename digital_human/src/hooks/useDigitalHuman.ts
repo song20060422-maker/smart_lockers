@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import { WebSocketClient } from '@/ws/WebSocketClient'
 import { SpeechEngine } from '@/tts/speech'
 import { CONFIG, getRole } from '@/config'
-import { appendMessage, setConnected, setThinking, setAction, setSpeaking, bumpSpeakPulse, setError } from '@/store'
+import { appendMessage, setConnected, setThinking, setAction, setSpeaking, bumpSpeakPulse, setError, clearConversation } from '@/store'
 import type { ChatMessage, AgentReplyPayload } from '@/types'
 import type { AppDispatch } from '@/store'
 
@@ -30,7 +30,7 @@ const emotionAction = (emotion: string): AgentReplyPayload['action'] => {
 
 // 导出 function useDigitalHuman() {，供其他模块引用
 
-export function useDigitalHuman() {
+export function useDigitalHuman(role: string | null) {
   // 声明变量 dispatch = useDispatch<AppDispatch>()，用于保存数据或函数引用
 
   const dispatch = useDispatch<AppDispatch>()
@@ -41,9 +41,20 @@ export function useDigitalHuman() {
 
   const speechRef = useRef<SpeechEngine | null>(null)
 
+  // 会话代次 ref：账号切换/重连时 +1，用于丢弃旧连接迟到的欢迎语与回复，杜绝串号 @ticket 07
+  // 声明变量 sessionRef，保存运行过程中的自增会话编号
+
+  const sessionRef = useRef(0)
+
   // 调用 useEffect(() => {，触发对应功能
 
   useEffect(() => {
+    // 会话代次自增：本次 effect 建立的连接绑定唯一编号，旧连接回调因编号过期被忽略 @ticket 07
+    const session = ++sessionRef.current
+    // 账号角色变化（含首次登录/切换账号）先清空上一账号的对话与瞬时状态，保证角色内容完全隔离 @ticket 07
+    dispatch(clearConversation())
+    // 未登录或无业务角色时不建立连接，等待账号登录判定角色后再接入 @ticket 07
+    if (!role) return
     // 声明变量 speech = new SpeechEngine(getRole().voice, { onRecognized: (text) => send(text, 'voice') })，用于保存数据或函数引用
 
     const speech = new SpeechEngine(getRole().voice, {
@@ -64,15 +75,24 @@ export function useDigitalHuman() {
 
     speechRef.current = speech
 
-    // 声明变量 ws = new WebSocketClient(CONFIG.wsUrl, CONFIG.token, {，用于保存数据或函数引用
+    // 声明变量 ws = new WebSocketClient，接入账号判定的业务角色（由父组件传入）@ticket 07
 
-    const ws = new WebSocketClient(CONFIG.wsUrl, CONFIG.token, {
-      // 定义对象属性 onStatus，取值为 (c) => dispatch(setConnected(c))
+    const ws = new WebSocketClient(CONFIG.wsUrl, CONFIG.token, role, {
+      // 定义对象属性 onStatus，仅处理当前会话代次的状态，避免旧连接迟到事件改状态 @ticket 07
 
-      onStatus: (c) => dispatch(setConnected(c)),
-      // 定义对象属性 onReply，取值为 (p: AgentReplyPayload) => {
+      onStatus: (c) => {
+        // 丢弃过期连接的状态回调 @ticket 07
+
+        if (sessionRef.current !== session) return
+        // 同步连接态到 Redux，驱动 UI 连接指示 @ticket 07
+        dispatch(setConnected(c))
+      },
+      // 定义对象属性 onReply，仅处理当前会话代次的消息，杜绝切换账号后旧角色欢迎语/回复串入 @ticket 07
 
       onReply: (p: AgentReplyPayload) => {
+        // 丢弃过期连接的欢迎语与回复，这是串号与重复欢迎语的关键拦截点 @ticket 07
+
+        if (sessionRef.current !== session) return
         // 调用 dispatch(setThinking(false))，触发对应功能
 
         dispatch(setThinking(false))
@@ -100,13 +120,11 @@ export function useDigitalHuman() {
     // 赋值更新：wsRef.current = ws
 
     wsRef.current = ws
-    // 返回 () => { ws.close(); speech.stop() } 给调用方
+    // 返回 () => { ws.close(); speech.stop() } 给调用方，并使当前会话代次立即失效以丢弃旧连接迟到回调 @ticket 07
 
-    return () => { ws.close(); speech.stop() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  // 执行 }, [dispatch])，实现对应的前端逻辑
-
-  }, [dispatch])
+    return () => { sessionRef.current += 1; ws.close(); speech.stop() }
+  // role 变化时重连以切换到对应角色内容 @ticket 07
+  }, [dispatch, role])
 
   // 声明变量 send = useCallback((content: string, type: 'text' | 'voice' = 'text') => {，用于保存数据或函数引用
 

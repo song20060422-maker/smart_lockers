@@ -18,3 +18,6 @@ func serviceRecon(st *store.Store) *service.ReconcileService { return service.Ne
 // 定义函数 serviceAlarm：封装一段可复用的处理逻辑（参数：st *store.Store）
 
 func serviceAlarm(st *store.Store) *service.AlarmService   { return service.NewAlarm(st) }
+// 定义函数 serviceIot：封装一段可复用的处理逻辑（参数：st *store.Store）@ticket B端-IoT中台
+
+func serviceIot(st *store.Store) *service.IotService       { return service.NewIot(st) }

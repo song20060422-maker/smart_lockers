@@ -46,3 +46,12 @@ alipay:
   notify_url: "https://<YOUR_DOMAIN>/api/v1/pay/alipay/notify"
   return_url: ""
   sandbox: true
+
+# MQTT设备接入配置（IoT-MQTT）：enabled=true 时连接 EMQX；不可达自动降级本地演示模式
+mqtt:
+  enabled: false
+  broker: "tcp://<MQTT_HOST>:1883"       # 示例 tcp://127.0.0.1:1883
+  client_id: "smart-lockers-backend"     # 后端服务客户端ID
+  username: "backend-service"            # ACL 后端服务用户名
+  password: "<MQTT_PASSWORD>"            # 凭据仅写入 config.yaml，禁止提交仓库
+  token_expire_hours: 24                 # 设备令牌有效期（方案默认24h）

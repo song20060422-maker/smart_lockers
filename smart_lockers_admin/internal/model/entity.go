@@ -104,6 +104,12 @@ type Device struct {
 	// 结构体字段 Code，类型为 string，附带标签 `json:"code"`
 
 	Code          string    `json:"code"`
+	// 结构体字段 DeviceSN，类型为 string，附带标签 `gorm:"size:64" json:"device_sn"`；IoT 设备序列号（IoT中台新增，对应C端 IoTDevice）@ticket B端-IoT中台
+
+	DeviceSN      string    `gorm:"size:64" json:"device_sn"`
+	// 结构体字段 Firmware，类型为 string，附带标签 `gorm:"size:32" json:"firmware"`；当前固件版本（OTA 后更新）@ticket B端-IoT中台
+
+	Firmware      string    `gorm:"size:32" json:"firmware"`
 	// 结构体字段 Type，类型为 string，附带标签 `json:"type"`
 
 	Type          string    `json:"type"`   // cabinet / door

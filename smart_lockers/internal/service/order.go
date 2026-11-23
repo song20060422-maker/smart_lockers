@@ -427,6 +427,17 @@ func UseOpenAuth(token string) (map[string]interface{}, int) {
 	// 执行 pkg.Logf("[AUDIT] @ticket 05 temp open auth used: token=%s", token[:8])，完成对应的业务处理
 
 	pkg.Logf("[AUDIT] @ticket 05 temp open auth used: token=%s", token[:8])
+	// MQTT 联动：临时开柜授权使用后向设备下发开门指令（Broker 未启用时静默跳过）@ticket IoT-MQTT设备接入
+	// 条件判断：a, err := lookupAuthOrderNo(token); err == nil 时执行下面逻辑
+
+	if orderNo, lookupErr := lookupAuthOrderNo(token); lookupErr == nil && orderNo != "" {
+		// 忽略下发错误：MQTT 链路异常不阻断既有订单流程
+		// 忽略该调用的返回值，仅执行其副作用
+
+		_ = DispatchOpenDoorForOrder(orderNo, "user")
+	// 当前代码块结束
+
+	}
 	// 返回 map[string]interface{}{"token": token, "ok": true}, pkg.CodeOK 给调用方，结束当前函数
 
 	return map[string]interface{}{"token": token, "ok": true}, pkg.CodeOK
@@ -624,6 +635,10 @@ func CompleteOrder(userID uint, orderNo string) (map[string]interface{}, int) {
 	// 当前代码块结束
 
 	}
+	// MQTT 联动：订单完成（取件开门）后向设备下发开门指令（Broker 未启用时静默跳过）@ticket IoT-MQTT设备接入
+	// 忽略该调用的返回值，仅执行其副作用
+
+	_ = DispatchOpenDoorForOrder(orderNo, fmt.Sprintf("user_%d", userID))
 	// 返回 map[string]interface{}{"order_no": orderNo, "status": 2}, pkg.CodeOK 给调用方，结束当前函数
 
 	return map[string]interface{}{"order_no": orderNo, "status": 2}, pkg.CodeOK

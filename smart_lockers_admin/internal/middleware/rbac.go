@@ -39,6 +39,9 @@ const (
 	// 为 PermAuditRead 赋值："audit:read"
 
 	PermAuditRead  = "audit:read"
+	// 为 PermOtaManage 赋值："ota:manage" // OTA 任务创建/指令下发（IoT中台）@ticket B端-IoT中台
+
+	PermOtaManage  = "ota:manage"
 // 结束参数/表达式列表
 
 )
@@ -65,6 +68,9 @@ var rolePermissions = map[model.AdminRole]map[string]bool{
 		// 执行 PermDeviceRead: true, PermDeviceCtl: true,，完成对应的业务处理
 
 		PermDeviceRead: true, PermDeviceCtl: true,
+		// 执行 PermOtaManage: true, // 网点管理员可管理本网点设备 OTA 与指令 @ticket B端-IoT中台
+
+		PermOtaManage: true,
 		// 执行 PermReconRead: true,，完成对应的业务处理
 
 		PermReconRead: true,
@@ -83,6 +89,9 @@ var rolePermissions = map[model.AdminRole]map[string]bool{
 		// 执行 PermDeviceRead: true, PermDeviceCtl: true,，完成对应的业务处理
 
 		PermDeviceRead: true, PermDeviceCtl: true,
+		// 执行 PermOtaManage: true, // 平台运营可全局管理 OTA 与指令 @ticket B端-IoT中台
+
+		PermOtaManage: true,
 		// 执行 PermReconRead: true, PermReconRun: true,，完成对应的业务处理
 
 		PermReconRead: true, PermReconRun: true,

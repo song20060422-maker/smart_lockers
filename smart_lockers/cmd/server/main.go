@@ -9,6 +9,7 @@ import (
 	"smart_lockers/internal/model"
 	"smart_lockers/internal/pkg"
 	"smart_lockers/internal/router"
+	"smart_lockers/internal/service"
 )
 
 // 定义函数 main：封装一段可复用的处理逻辑（参数：）
@@ -53,6 +54,31 @@ func main() {
 	// 执行 autoMigrate()，完成对应的业务处理
 
 	autoMigrate()
+	// 数字人独立账号种子：表为空时写入 admin/123456（bcrypt 哈希），确保账号真实存在于数据库 @ticket 07-数字人Coze
+	// 执行 service.SeedDigitalHumanAccount()，完成对应的业务处理
+
+	service.SeedDigitalHumanAccount()
+
+	// IoT 设备 MQTT 接入：连接 EMQX 并订阅 device/# 上行（失败降级演示模式）@ticket IoT-MQTT设备接入
+	// 执行 pkg.InitMQTT(pkg.NewMqttConfig(cfg.MQTT), service.RouteMessage)，完成对应的业务处理
+
+	pkg.InitMQTT(pkg.NewMqttConfig(cfg.MQTT), service.RouteMessage)
+	// 条件判断：pkg.MqttReady() 时执行下面逻辑
+
+	if pkg.MqttReady() {
+		// 订阅全部上行 Topic（方案 3.4 ACL：后端允许订阅 device/#）@ticket IoT-MQTT设备接入
+		// 条件判断：err := pkg.MqttSubscribe("device/#", nil); err != nil 时执行下面逻辑
+
+		if err := pkg.MqttSubscribe("device/#", nil); err != nil {
+			// 执行 log.Printf("[WARN] mqtt subscribe device/# failed: %v", err)，完成对应的业务处理
+
+			log.Printf("[WARN] mqtt subscribe device/# failed: %v", err)
+		// 当前代码块结束
+
+		}
+	// 当前代码块结束
+
+	}
 
 	// 定义并初始化局部变量 r，取值为 router.Setup()
 
@@ -124,6 +150,17 @@ func allModels() []interface{} {
 		// 执行 &model.NotifyTemplate{}, &model.NotifyMessage{},，完成对应的业务处理
 
 		&model.NotifyTemplate{}, &model.NotifyMessage{},
+		// IoT 设备接入表（工单 IoT-MQTT）@ticket IoT-MQTT设备接入
+		// 执行 &model.IoTDevice{}, &model.DeviceToken{}, &model.DeviceCommand{},，完成对应的业务处理
+
+		&model.IoTDevice{}, &model.DeviceToken{}, &model.DeviceCommand{},
+		// 执行 &model.DeviceEvent{}, &model.OtaTask{},，完成对应的业务处理
+
+		&model.DeviceEvent{}, &model.OtaTask{},
+		// 数字人独立登录账号表（工单07）@ticket 07-数字人Coze
+		// 执行 &model.DigitalHumanAccount{}，完成对应的业务处理
+
+		&model.DigitalHumanAccount{},
 	// 当前代码块结束
 
 	}

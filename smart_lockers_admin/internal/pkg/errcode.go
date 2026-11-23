@@ -66,6 +66,14 @@ const (
 	// 为 ErrAlarmState 赋值：23002 // 告警状态不允许重复处理
 
 	ErrAlarmState = 23002 // 告警状态不允许重复处理
+
+	// B端 IoT中台(24) @ticket B端-IoT中台
+	// 为 ErrOtaNF 赋值：24001 // OTA任务不存在
+
+	ErrOtaNF      = 24001 // OTA任务不存在
+	// 为 ErrCmdInvalid 赋值：24002 // 指令类型不支持
+
+	ErrCmdInvalid = 24002 // 指令类型不支持
 // 结束参数/表达式列表
 
 )
@@ -107,6 +115,9 @@ var errMessages = map[int]string{
 	// 执行 ErrAlarmNF: "告警不存在", ErrAlarmState: "告警已处理，不可重复处理",，完成对应的业务处理
 
 	ErrAlarmNF: "告警不存在", ErrAlarmState: "告警已处理，不可重复处理",
+	// 执行 ErrOtaNF: "OTA任务不存在", ErrCmdInvalid: "指令类型不支持"，完成对应的业务处理
+
+	ErrOtaNF: "OTA任务不存在", ErrCmdInvalid: "指令类型不支持",
 // 当前代码块结束
 
 }

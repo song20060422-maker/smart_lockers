@@ -26,6 +26,9 @@ export class WebSocketClient {
   // 执行 private token: string，实现对应的前端逻辑
 
   private token: string
+  // 登录账号判定的业务角色 sender/receiver/service，握手时带给后端以选择差异化内容 @ticket 07
+
+  private role: string
   // 执行 private handlers: Handlers，实现对应的前端逻辑
 
   private handlers: Handlers
@@ -42,15 +45,18 @@ export class WebSocketClient {
 
   private manualClose = false
 
-  // 调用 constructor(url: string, token: string, handlers: Handlers) {，触发对应功能
+  // 调用 constructor(url: string, token: string, role: string, handlers: Handlers) {，触发对应功能
 
-  constructor(url: string, token: string, handlers: Handlers) {
+  constructor(url: string, token: string, role: string, handlers: Handlers) {
     // 赋值更新：this.url = url
 
     this.url = url
     // 赋值更新：this.token = token
 
     this.token = token
+    // 赋值更新：this.role = role（业务角色，决定后端差异化问答）
+
+    this.role = role
     // 赋值更新：this.handlers = handlers
 
     this.handlers = handlers
@@ -67,9 +73,9 @@ export class WebSocketClient {
     // 声明变量 sep = this.url.includes('?') ? '&' : '?'，用于保存数据或函数引用
 
     const sep = this.url.includes('?') ? '&' : '?'
-    // 赋值更新：this.ws = new WebSocket(`${this.url}${sep}token=${encodeURIComponent(this.token)}`)
+    // 将 token 与业务角色拼入握手 query，后端按 role 选择对应人设与专属问答 @ticket 07
 
-    this.ws = new WebSocket(`${this.url}${sep}token=${encodeURIComponent(this.token)}`)
+    this.ws = new WebSocket(`${this.url}${sep}token=${encodeURIComponent(this.token)}&role=${encodeURIComponent(this.role)}`)
     // 赋值更新：this.ws.onopen = () => { this.retry = 0; this.handlers.onStatus?.(true) }
 
     this.ws.onopen = () => { this.retry = 0; this.handlers.onStatus?.(true) }

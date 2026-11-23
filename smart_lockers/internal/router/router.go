@@ -28,6 +28,13 @@ func Setup() *gin.Engine {
 
 	r.GET("/health", func(c *gin.Context) { pkg.OK(c, map[string]interface{}{"status": "up"}) })
 
+	// 工单07 数字人 WebSocket：本地演示模式，前端 Vite 代理 /ws → ws://localhost:18080 @ticket 07-数字人Coze
+
+	r.GET("/ws/digital-human", handler.DigitalHumanWS)
+	// 工单07 数字人账号密码登录：真实查库校验，前端 Vite 代理 /api → http://localhost:18080 @ticket 07-数字人Coze
+
+	r.POST("/api/v1/digital-human/login", handler.DigitalHumanLogin)
+
 	// 定义并初始化局部变量 v1，取值为 r.Group("/api/v1")
 
 	v1 := r.Group("/api/v1")
@@ -48,7 +55,7 @@ func Setup() *gin.Engine {
 		// 执行 auth.POST("/logout", middleware.Auth(), handler.Logout)，完成对应的业务处理
 
 		auth.POST("/logout", middleware.Auth(), handler.Logout)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -71,7 +78,7 @@ func Setup() *gin.Engine {
 		// 执行 home.GET("/guide", handler.GetGuide)，完成对应的业务处理
 
 		home.GET("/guide", handler.GetGuide)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -94,7 +101,7 @@ func Setup() *gin.Engine {
 		// 执行 dep.POST("/orders/:order_no/change-cabinet", middleware.Auth(), handler.ChangeCabinet)，完成对应的业务处理
 
 		dep.POST("/orders/:order_no/change-cabinet", middleware.Auth(), handler.ChangeCabinet)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -122,8 +129,8 @@ func Setup() *gin.Engine {
 		pay.POST("/alipay/callback", handler.RechargeCallback) // 兼容本地 JSON 回调
 		// 执行 pay.POST("/alipay/notify", handler.AlipayNotify)       // 支付宝官方异步通知（form + RSA2 验签），完成对应的业务处理
 
-		pay.POST("/alipay/notify", handler.AlipayNotify)       // 支付宝官方异步通知（form + RSA2 验签）
-	// 当前代码块结束
+		pay.POST("/alipay/notify", handler.AlipayNotify) // 支付宝官方异步通知（form + RSA2 验签）
+		// 当前代码块结束
 
 	}
 
@@ -158,7 +165,7 @@ func Setup() *gin.Engine {
 		// 执行 orders.POST("/open-auth/:token/use", handler.UseOpenAuth)，完成对应的业务处理
 
 		orders.POST("/open-auth/:token/use", handler.UseOpenAuth)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -190,7 +197,7 @@ func Setup() *gin.Engine {
 		// 修复偏差1：用户端前端 validateCoupon 使用 POST，补充同路径 POST 路由（与 GET 并存）@ticket 06-个人中心
 
 		user.POST("/coupons/:code/validate", handler.ValidateCoupon)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -219,7 +226,7 @@ func Setup() *gin.Engine {
 		// 执行 notify.GET("/monitor", handler.Monitor)，完成对应的业务处理
 
 		notify.GET("/monitor", handler.Monitor)
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 
@@ -254,6 +261,66 @@ func Setup() *gin.Engine {
 		// 执行 ops.GET("/expvar", handler.Expvar)，完成对应的业务处理
 
 		ops.GET("/expvar", handler.Expvar)
+		// 当前代码块结束
+
+	}
+
+	// IoT 设备接入（工单 IoT-MQTT）：设备侧凭证/Hook 接口免 JWT（凭 SN+Secret/Token 校验），管理接口走 JWT @ticket IoT-MQTT设备接入
+	// 定义并初始化局部变量 dev，取值为 v1.Group("/devices")
+
+	dev := v1.Group("/devices")
+	// 进入该代码块，开始执行其中的逻辑
+
+	{
+		// 设备请求 MQTT 凭证（方案 2.2 认证接口）
+		// 执行 dev.POST("/auth", handler.DeviceAuth)，完成对应的业务处理
+
+		dev.POST("/auth", handler.DeviceAuth)
+		// EMQX HTTP 认证 Hook（Token 校验）
+		// 执行 dev.POST("/emqx/auth", handler.EMQXAuthHook)，完成对应的业务处理
+
+		dev.POST("/emqx/auth", handler.EMQXAuthHook)
+		// EMQX 上下线 Webhook
+		// 执行 dev.POST("/emqx/webhook", handler.EMQXWebhook)，完成对应的业务处理
+
+		dev.POST("/emqx/webhook", handler.EMQXWebhook)
+	// 当前代码块结束
+
+	}
+	// IoT 设备管理查询/指令/OTA（JWT 鉴权）@ticket IoT-MQTT设备接入
+	// 定义并初始化局部变量 devAuth，取值为 v1.Group("/devices")
+
+	devAuth := v1.Group("/devices")
+	// 执行 devAuth.Use(middleware.Auth())，完成对应的业务处理
+
+	devAuth.Use(middleware.Auth())
+	// 进入该代码块，开始执行其中的逻辑
+
+	{
+		// 设备状态列表
+		// 执行 devAuth.GET("/status", handler.DeviceStatusH)，完成对应的业务处理
+
+		devAuth.GET("/status", handler.DeviceStatusH)
+		// 下发设备指令（开门/关门/重启/配置）
+		// 执行 devAuth.POST("/command", handler.DeviceCommandH)，完成对应的业务处理
+
+		devAuth.POST("/command", handler.DeviceCommandH)
+		// 指令记录查询
+		// 执行 devAuth.GET("/commands", handler.DeviceCommandsH)，完成对应的业务处理
+
+		devAuth.GET("/commands", handler.DeviceCommandsH)
+		// 设备上行事件查询
+		// 执行 devAuth.GET("/events", handler.DeviceEventsH)，完成对应的业务处理
+
+		devAuth.GET("/events", handler.DeviceEventsH)
+		// 创建 OTA 升级任务
+		// 执行 devAuth.POST("/ota", handler.DeviceOtaCreateH)，完成对应的业务处理
+
+		devAuth.POST("/ota", handler.DeviceOtaCreateH)
+		// OTA 任务列表
+		// 执行 devAuth.GET("/ota/list", handler.DeviceOtaListH)，完成对应的业务处理
+
+		devAuth.GET("/ota/list", handler.DeviceOtaListH)
 	// 当前代码块结束
 
 	}
@@ -261,6 +328,6 @@ func Setup() *gin.Engine {
 	// 返回 r 给调用方，结束当前函数
 
 	return r
-// 当前代码块结束
+	// 当前代码块结束
 
 }
