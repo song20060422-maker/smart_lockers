@@ -8,7 +8,7 @@ import type { RootState } from '@/store'
 import './styles.css'
 
 export default function App() {
-  const { messages, connected, thinking, action, error } = useSelector((s: RootState) => s.hub)
+  const { messages, connected, thinking, action, speaking, speakPulse, error } = useSelector((s: RootState) => s.hub)
   const { send, listen } = useDigitalHuman()
   const [input, setInput] = useState('')
   const [modelPath, setModelPath] = useState(CONFIG.modelPath)
@@ -29,7 +29,7 @@ export default function App() {
       </header>
 
       <div className="stage">
-        <Live2DViewer modelPath={modelPath} action={action} />
+        <Live2DViewer modelPath={modelPath} action={action} speaking={speaking} speakPulse={speakPulse} />
         <div className="chat">
           <div className="messages">
             {messages.map((m, i) => (

@@ -6,6 +6,12 @@ import { CartoonAvatarEngine } from '@/live2d/CartoonAvatarEngine'
 interface Props {
   modelPath: string
   action: Live2DAction | null
+  // 声明属性 speaking，标识当前是否正在语音播报
+
+  speaking: boolean
+  // 声明属性 speakPulse，语音边界计数，变化时触发一次张口脉冲
+
+  speakPulse: number
   onError?: (e: string) => void
 }
 
@@ -14,7 +20,7 @@ interface Props {
  * - 生产环境将 canvas 交给 awesome-digital-human-live2d 的 PIXI/Live2D Core SDK 托管（商业 SDK 需自行授权，见 public/models/README.md）。
  * - 此处保留标准挂载点、模型路径配置与动作驱动接口，保证依赖隔离、可替换为任意渲染后端。
  */
-export default function Live2DViewer({ modelPath, action, onError }: Props) {
+export default function Live2DViewer({ modelPath, action, speaking, speakPulse, onError }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   // 声明 ref engineRef，保存自绘引擎实例，供动作 effect 复用同一实例
 
@@ -65,6 +71,19 @@ export default function Live2DViewer({ modelPath, action, onError }: Props) {
     const t = setTimeout(() => hostRef.current?.removeAttribute('data-action'), action.duration_ms ?? 1200)
     return () => clearTimeout(t)
   }, [action])
+
+  // 播报状态 effect：把说话状态同步给引擎，开启或关闭口型与声波光环
+
+  useEffect(() => {
+    engineRef.current?.setSpeaking(speaking)
+  }, [speaking])
+
+  // 语音边界 effect：计数变化时注入一次张口脉冲，使口型贴合真实发音
+
+  useEffect(() => {
+    if (speakPulse === 0) return
+    engineRef.current?.pulseMouth()
+  }, [speakPulse])
 
   return (
     <div ref={hostRef} className="live2d-host" aria-label="Live2D 数字人渲染区（ticket 07）">

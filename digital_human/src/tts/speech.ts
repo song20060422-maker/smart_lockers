@@ -5,6 +5,12 @@ export interface SpeechHooks {
   // 定义对象属性 onRecognized，取值为 (text: string) => void
 
   onRecognized: (text: string) => void
+  // 定义对象属性 onSpeakStart?: () => void，播报开始时回调，驱动口型进入说话态
+
+  onSpeakStart?: () => void
+  // 定义对象属性 onSpeakBoundary?: () => void，语音边界触发时回调，驱动张口脉冲
+
+  onSpeakBoundary?: () => void
   // 执行 onSpeakEnd?: () => void，实现对应的前端逻辑
 
   onSpeakEnd?: () => void
@@ -89,6 +95,14 @@ export class SpeechEngine {
 
     if (voice) utter.voice = voice
     // 赋值更新：utter.onend = () => this.hooks.onSpeakEnd?.()
+
+    // 执行方法：播报开始时回调，通知上层进入说话口型状态
+
+    utter.onstart = () => this.hooks.onSpeakStart?.()
+
+    // 执行方法：语音边界事件回调，通知上层注入一次张口脉冲（部分浏览器不触发，作增强）
+
+    utter.onboundary = () => this.hooks.onSpeakBoundary?.()
 
     utter.onend = () => this.hooks.onSpeakEnd?.()
     // 执行 window.speechSynthesis.speak(utter)，实现对应的前端逻辑
