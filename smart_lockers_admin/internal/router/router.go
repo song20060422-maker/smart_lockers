@@ -117,9 +117,9 @@ func Setup(st *store.Store) *gin.Engine {
 		}
 
 		// 充值对账：读(网点管理员+运营)/执行(仅运营)
-		// 定义并初始化局部变量 rec，取值为 admin.Group("/reconcile")
+	// 定义并初始化局部变量 rec，取值为 admin.Group("/reconcile")
 
-		rec := admin.Group("/reconcile")
+	rec := admin.Group("/reconcile")
 		// 进入该代码块，开始执行其中的逻辑
 
 		{
@@ -129,6 +129,40 @@ func Setup(st *store.Store) *gin.Engine {
 			// 执行 rec.POST("/run", middleware.RequirePerm(middleware.PermReconRun), recH.Run)，完成对应的业务处理
 
 			rec.POST("/run", middleware.RequirePerm(middleware.PermReconRun), recH.Run)
+		// 当前代码块结束
+
+		}
+
+		// IoT 中台：总览/指令/OTA（读走 device:read，写走 ota:manage）@ticket B端-IoT中台
+		// 定义并初始化局部变量 iotH，取值为 handler.NewIot(serviceIot(st))
+
+		iotH := handler.NewIot(serviceIot(st))
+		// 定义并初始化局部变量 iot，取值为 admin.Group("/iot")
+
+		iot := admin.Group("/iot")
+		// 进入该代码块，开始执行其中的逻辑
+
+		{
+			// 中台总览：设备状态分布/EMQX 健康/Topic 与 ACL 规范
+			// 执行 iot.GET("/overview", middleware.RequirePerm(middleware.PermDeviceRead), iotH.Overview)，完成对应的业务处理
+
+			iot.GET("/overview", middleware.RequirePerm(middleware.PermDeviceRead), iotH.Overview)
+			// 下发控制指令（平台运营/网点管理员）
+			// 执行 iot.POST("/devices/:id/command", middleware.RequirePerm(middleware.PermOtaManage), iotH.Dispatch)，完成对应的业务处理
+
+			iot.POST("/devices/:id/command", middleware.RequirePerm(middleware.PermOtaManage), iotH.Dispatch)
+			// 指令响应记录
+			// 执行 iot.GET("/commands", middleware.RequirePerm(middleware.PermDeviceRead), iotH.CommandRecords)，完成对应的业务处理
+
+			iot.GET("/commands", middleware.RequirePerm(middleware.PermDeviceRead), iotH.CommandRecords)
+			// 新建 OTA 升级任务
+			// 执行 iot.POST("/devices/:id/ota", middleware.RequirePerm(middleware.PermOtaManage), iotH.OtaCreate)，完成对应的业务处理
+
+			iot.POST("/devices/:id/ota", middleware.RequirePerm(middleware.PermOtaManage), iotH.OtaCreate)
+			// OTA 任务列表
+			// 执行 iot.GET("/ota-tasks", middleware.RequirePerm(middleware.PermDeviceRead), iotH.OtaTasks)，完成对应的业务处理
+
+			iot.GET("/ota-tasks", middleware.RequirePerm(middleware.PermDeviceRead), iotH.OtaTasks)
 		// 当前代码块结束
 
 		}

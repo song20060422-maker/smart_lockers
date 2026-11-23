@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+
 	"smart_lockers/internal/middleware"
 	"smart_lockers/internal/model"
 	"smart_lockers/internal/pkg"
@@ -365,33 +367,39 @@ func DemoLogin(phone string, code string) (uint, string, int) {
 	// 默认演示 uid，与既有演示用户数据一致（10001）
 
 	var uid uint = 10001
-	// 数据库可用时按手机号定位用户，存在则复用其 uid
+	// 数据库可用时按手机号定位用户，存在则复用其 uid；任何 DB 异常均兜底演示 uid，保证演示环境可登录 @ticket 00-project
 
 	if pkg.DB != nil {
 		// 声明变量 u model.UserProfile，用于保存运行过程中的数据
 
 		var u model.UserProfile
-		// 按手机号查询，命中则采用库中 uid
+		// 按手机号查询，命中则采用库中 uid；查询异常（表结构缺失/连接抖动）降级演示 uid 并留痕
 
-		if pkg.DB.Where("phone = ?", phone).First(&u).Error == nil {
+		if err := pkg.DB.Where("phone = ?", phone).First(&u).Error; err == nil {
 			// 赋值更新：uid = u.ID
 
 			uid = u.ID
 		// 当前代码块结束
 
-		} else {
+		} else if err == gorm.ErrRecordNotFound {
 			// 手机号不存在则创建演示用户，昵称由手机号脱敏生成
 
 			u = model.UserProfile{Phone: phone, Nickname: "用户" + phone[len(phone)-4:], Role: "user", Status: 1}
 			// 写库，失败不影响演示登录降级
 
-			if pkg.DB.Create(&u).Error == nil {
+			if createErr := pkg.DB.Create(&u).Error; createErr == nil {
 				// 赋值更新：uid = u.ID
 
 				uid = u.ID
 			// 当前代码块结束
 
 			}
+		// 上述条件不成立时，执行 else 分支逻辑
+
+		} else {
+			// DB 非记录缺失类异常：记日志并按演示 uid 签发，登录不因基础设施抖动失败 @ticket 00-project
+
+			pkg.Logf("[WARN] @ticket 00 demo login db error: phone=%s err=%v (fallback demo uid)", phone, err)
 		// 当前代码块结束
 
 		}

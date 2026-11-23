@@ -79,24 +79,33 @@ const auth = useAuthStore()
 // 赋值更新：const { message } = useNotify()
 
 const { message } = useNotify()
-// 声明变量 menus = [，用于保存数据或函数引用
+// 声明变量 menus = [，用于保存数据或函数引用；perm 与路由 meta.perm 一致，用于按角色过滤菜单 @ticket B端-RBAC
 
-const menus = [
-  // 执行 { path: '/sites', title: '网点管理' },，实现对应的前端逻辑
+const allMenus = [
+  // 执行 { path: '/sites', title: '网点管理', perm: 'site:read' },，实现对应的前端逻辑
 
-  { path: '/sites', title: '网点管理' },
-  // 执行 { path: '/devices', title: '设备监控' },，实现对应的前端逻辑
+  { path: '/sites', title: '网点管理', perm: 'site:read' },
+  // 执行 { path: '/devices', title: '设备监控', perm: 'device:read' },，实现对应的前端逻辑
 
-  { path: '/devices', title: '设备监控' },
-  // 执行 { path: '/reconcile', title: '充值对账' },，实现对应的前端逻辑
+  { path: '/devices', title: '设备监控', perm: 'device:read' },
+  // 执行 { path: '/iot', title: 'IoT 总览', perm: 'device:read' },，实现对应的前端逻辑
 
-  { path: '/reconcile', title: '充值对账' },
-  // 执行 { path: '/alarms', title: '告警处理' },，实现对应的前端逻辑
+  { path: '/iot', title: 'IoT 总览', perm: 'device:read' },
+  // 执行 { path: '/ota', title: 'OTA 升级', perm: 'device:read' },，实现对应的前端逻辑
 
-  { path: '/alarms', title: '告警处理' },
+  { path: '/ota', title: 'OTA 升级', perm: 'device:read' },
+  // 执行 { path: '/reconcile', title: '充值对账', perm: 'reconcile:read' },，实现对应的前端逻辑
+
+  { path: '/reconcile', title: '充值对账', perm: 'reconcile:read' },
+  // 执行 { path: '/alarms', title: '告警处理', perm: 'alarm:read' },，实现对应的前端逻辑
+
+  { path: '/alarms', title: '告警处理', perm: 'alarm:read' },
 // 结束切片/数组字面量
 
 ]
+// 计算属性 menus：按当前角色权限过滤侧边菜单（普通用户仅可见网点管理）@ticket B端-RBAC
+
+const menus = computed(() => allMenus.filter((m) => auth.can(m.perm)))
 // 声明变量 currentTitle = computed(() => (route.meta.title as string) || '运营后台')，用于保存数据或函数引用
 
 const currentTitle = computed(() => (route.meta.title as string) || '运营后台')

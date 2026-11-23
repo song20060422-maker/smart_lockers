@@ -32,18 +32,18 @@
       <!-- 表格元素，用于展示设备记录列表 -->
 
       <table>
-        <!-- 表头区域，一行 tr 内依次定义 ID、编码、网点ID、类型、状态、最后心跳、操作等列名 th 单元格 -->
+        <!-- 表头区域：新增 SN/固件列与 MQTT 指令操作列 @ticket B端-IoT中台 -->
 
-        <thead><tr><th>ID</th><th>编码</th><th>网点ID</th><th>类型</th><th>状态</th><th>最后心跳</th><th>操作</th></tr></thead>
+        <thead><tr><th>ID</th><th>编码</th><th>设备SN</th><th>固件</th><th>网点ID</th><th>类型</th><th>状态</th><th>最后心跳</th><th>操作</th><th>MQTT指令</th></tr></thead>
         <!-- 表体区域，用于放置设备数据行 -->
 
         <tbody>
           <!-- 基于 rows 列表循环生成表格行，key 取 d.id 作为唯一标识 -->
 
           <tr v-for="d in rows" :key="d.id">
-            <!-- 一行内的四个单元格，依次插值显示设备 ID、编码 d.code、网点ID d.site_id 与类型 d.type -->
+            <!-- 一行内的基础信息单元格：ID/编码/SN/固件/网点ID/类型 -->
 
-            <td>{{ d.id }}</td><td>{{ d.code }}</td><td>{{ d.site_id }}</td><td>{{ d.type }}</td>
+            <td>{{ d.id }}</td><td>{{ d.code }}</td><td class="muted">{{ d.device_sn || '—' }}</td><td class="muted">{{ d.firmware || '—' }}</td><td>{{ d.site_id }}</td><td>{{ d.type }}</td>
             <!-- 状态单元格，内含标签 span，class 为 tag 并通过 statusClass(d.status) 动态计算样式类，插值 statusText(d.status) 显示状态文本 -->
 
             <td><span class="tag" :class="statusClass(d.status)">{{ statusText(d.status) }}</span></td>
@@ -68,12 +68,36 @@
             <!-- 闭合操作列单元格 -->
 
             </td>
+            <!-- MQTT 指令列：开门/关门/重启快捷指令（对齐原型 devices 视图"下发控制指令"）@ticket B端-IoT中台 -->
+
+            <td>
+              <!-- 指令按钮组，ota:manage 权限控制显隐 -->
+
+              <span v-if="auth.can('ota:manage')" class="cmds">
+                <!-- 开门指令按钮 -->
+
+                <button class="btn" @click="onCommand(d, 'open_door')">开门</button>
+                <!-- 关门指令按钮 -->
+
+                <button class="btn" @click="onCommand(d, 'close_door')">关门</button>
+                <!-- 重启指令按钮 -->
+
+                <button class="btn" @click="onCommand(d, 'reboot')">重启</button>
+              <!-- 闭合按钮组 -->
+
+              </span>
+              <!-- 无权限占位 -->
+
+              <span v-else class="muted">—</span>
+            <!-- 闭合 MQTT 指令列 -->
+
+            </td>
           <!-- 闭合当前数据行 tr 元素 -->
 
           </tr>
-          <!-- 空数据占位行，当 rows 长度为 0 时渲染，单元格 colspan 为 7 横跨整行，显示“暂无数据” -->
+          <!-- 空数据占位行，当 rows 长度为 0 时渲染，单元格 colspan 为 10 横跨整行，显示“暂无数据” -->
 
-          <tr v-if="!rows.length"><td colspan="7" class="muted">暂无数据</td></tr>
+          <tr v-if="!rows.length"><td colspan="10" class="muted">暂无数据</td></tr>
         <!-- 闭合表体 tbody 元素 -->
 
         </tbody>
@@ -81,6 +105,61 @@
 
       </table>
     <!-- 闭合卡片 div 元素 -->
+
+    </div>
+    <!-- 指令响应记录卡片（对齐原型 devices 视图"指令响应记录 device/response/{id}/…"）@ticket B端-IoT中台 -->
+
+    <div class="card">
+      <!-- 卡片标题与刷新按钮 -->
+
+      <div class="sec-h"><h3>指令响应记录</h3><button class="btn" @click="loadCmds">刷新</button></div>
+      <!-- 指令记录表格 -->
+
+      <table>
+        <!-- 表头：指令号/设备/类型/柜格/状态/响应/触发人/时间 -->
+
+        <thead><tr><th>指令号</th><th>设备</th><th>类型</th><th>柜格</th><th>状态</th><th>设备响应</th><th>触发人</th><th>时间</th></tr></thead>
+        <!-- 表体：循环指令记录 -->
+
+        <tbody>
+          <tr v-for="c in cmds" :key="c.id">
+            <!-- 指令号（等宽展示） -->
+
+            <td><code>{{ c.command_id }}</code></td>
+            <!-- 设备 SN -->
+
+            <td>{{ c.device_sn || c.device_id }}</td>
+            <!-- 指令类型 -->
+
+            <td>{{ c.cmd_type }}</td>
+            <!-- 柜格编号 -->
+
+            <td>{{ c.locker_no || '—' }}</td>
+            <!-- 指令状态标签 -->
+
+            <td><span class="tag" :class="cmdClass(c.status)">{{ cmdText(c.status) }}</span></td>
+            <!-- 设备响应报文（截断展示） -->
+
+            <td class="muted resp">{{ c.response || '—' }}</td>
+            <!-- 触发人 -->
+
+            <td>{{ c.operator }}</td>
+            <!-- 下发时间 -->
+
+            <td class="muted">{{ c.created_at }}</td>
+          <!-- 闭合行 -->
+
+          </tr>
+          <!-- 空数据占位 -->
+
+          <tr v-if="!cmds.length"><td colspan="8" class="muted">暂无指令记录</td></tr>
+        <!-- 闭合表体 -->
+
+        </tbody>
+      <!-- 闭合表格 -->
+
+      </table>
+    <!-- 闭合卡片 -->
 
     </div>
     <!-- 全局轻提示条，v-if 依据 message 是否有值决定是否渲染，class 为 toast，插值 message 显示提示内容 -->
@@ -95,7 +174,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import { useNotify } from '@/composables/useNotify'
-import type { Device, DeviceMonitor } from '@/types/api'
+import type { Device, DeviceMonitor, DeviceCommand } from '@/types/api'
 
 // 声明变量 auth = useAuthStore()，用于保存数据或函数引用
 
@@ -151,9 +230,66 @@ async function onControl(d: Device, e: Event) {
 // 调用 onMounted(load)，触发对应功能
 
 onMounted(load)
+
+// ============ IoT MQTT 指令（@ticket B端-IoT中台） ============
+// 声明变量 cmds = ref<DeviceCommand[]>([])，指令响应记录列表
+
+const cmds = ref<DeviceCommand[]>([])
+// 指令状态文案：0已下发 1成功 2失败 3超时/未发布
+
+const cmdText = (s: number) => ({ 0: '已下发', 1: '成功', 2: '失败', 3: '超时' }[s] || '未知')
+// 指令状态样式
+
+const cmdClass = (s: number) => ({ 0: 'warn', 1: 'ok', 2: 'err', 3: 'err' }[s] || 'muted')
+// 定义函数/方法 loadCmds：刷新指令响应记录
+
+async function loadCmds() {
+  // 尝试执行可能出错的逻辑，配合 catch 进行错误处理
+
+  try {
+    // 赋值更新：cmds.value = (await api.iotCommands()).data || []
+
+    cmds.value = (await api.iotCommands()).data || []
+  // 捕获上述逻辑抛出的异常并进行错误处理
+
+  } catch (e: any) { notify(e.message) }
+// 当前代码块结束
+
+}
+// 定义函数/方法 onCommand：下发 MQTT 控制指令（open_door/close_door/reboot）
+
+async function onCommand(d: Device, cmdType: string) {
+  // 等待异步操作完成：try { await api.iotDispatch(d.id, cmdType) }
+
+  try {
+    // 调用下发接口
+
+    const res: any = await api.iotDispatch(d.id, cmdType)
+    // 成功提示：published=false 时提示演示模式（Broker 未连接，指令仅落库）
+
+    notify(res.data?.published ? `指令已下发：${res.data.command_id}` : `指令已记录（Broker 未连接）：${res.data?.command_id || ''}`)
+    // 刷新指令记录
+
+    await loadCmds()
+  // 等待异步操作完成：catch (err: any) { notify(err.message) }
+
+  } catch (err: any) { notify(err.message) }
+// 当前代码块结束
+
+}
+// 初始加载指令记录（与设备列表并行）
+// 调用 onMounted(loadCmds)，触发对应功能
+
+onMounted(loadCmds)
 </script>
 <style scoped>
 .stats { display: flex; gap: 12px; align-items: center; }
 .stats b { font-size: 16px; }
 .muted { color: var(--muted); }
+.sec-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.sec-h h3 { margin: 0; font-size: 14px; }
+.cmds { display: inline-flex; gap: 6px; }
+.cmds .btn { padding: 3px 10px; font-size: 12px; }
+code { background: #f4f6fa; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+.resp { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

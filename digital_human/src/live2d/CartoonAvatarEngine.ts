@@ -488,7 +488,7 @@ export class CartoonAvatarEngine {
 
     this.drawAura(ctx, now, mouthOpen)
 
-    // 调用方法：绘制角色身体部分（制服、衣领与工牌）
+    // 调用方法：绘制角色身体部分（简约浅色上衣与品牌色点缀）
 
     this.drawBody(ctx, happy, sad, breath)
 
@@ -608,68 +608,67 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawBackdrop，绘制浅蓝柔和光晕与缓慢漂浮的光点
-
+  // 定义方法 drawBackdrop，绘制干净通透的浅蓝背景与缓慢漂浮的柔光粒子
   private drawBackdrop(ctx: CanvasRenderingContext2D, now: number) {
 
     // 声明变量 t，换算时间戳为秒作为漂浮相位
-
     const t = now / 1000
 
-    // 声明变量 g，创建以画布中上部为中心的径向渐变作为主光晕
+    // 声明变量 g，创建以画布中上部为中心的浅蓝径向渐变作为通透背景
+    const g = ctx.createRadialGradient(this.w * 0.5, this.h * 0.4, 8, this.w * 0.5, this.h * 0.4, Math.max(this.w, this.h) * 0.75)
 
-    const g = ctx.createRadialGradient(this.w * 0.5, this.h * 0.42, 10, this.w * 0.5, this.h * 0.42, Math.max(this.w, this.h) * 0.7)
+    // 渐变停靠点：中心使用柔和近白
+    g.addColorStop(0, 'rgba(255,255,255,0.98)')
 
-    // 渐变停靠点：中心使用近白色浅蓝
+    // 渐变停靠点：中段使用干净浅蓝
+    g.addColorStop(0.5, 'rgba(226,240,255,0.85)')
 
-    g.addColorStop(0, 'rgba(255,255,255,0.95)')
+    // 渐变停靠点：外缘使用更浅的冰蓝
+    g.addColorStop(1, 'rgba(214,233,252,0.35)')
 
-    // 渐变停靠点：中段使用柔和浅蓝
-
-    g.addColorStop(0.45, 'rgba(219,236,255,0.75)')
-
-    // 渐变停靠点：外缘淡出为透明
-
-    g.addColorStop(1, 'rgba(219,236,255,0)')
-
-    // 设置填充样式：应用主光晕渐变
-
+    // 设置填充样式：应用背景渐变
     ctx.fillStyle = g
 
-    // 调用方法：填充整个画布形成通透背景
-
+    // 调用方法：填充整个画布形成干净背景
     ctx.fillRect(0, 0, this.w, this.h)
 
-    // 调用方法：循环绘制 12 个缓慢漂浮的光点
+    // 声明变量 halo，创建底部柔和光晕，托出角色
+    const halo = ctx.createRadialGradient(this.w * 0.5, this.h * 0.78, 4, this.w * 0.5, this.h * 0.78, this.h * 0.34)
 
-    for (let i = 0; i < 12; i++) {
+    // 渐变停靠点：光晕中心使用极淡品牌蓝
+    halo.addColorStop(0, 'rgba(120,170,235,0.16)')
 
-      // 声明变量 px，用正弦让光点在水平方向缓慢漂移
+    // 渐变停靠点：光晕外缘淡出为透明
+    halo.addColorStop(1, 'rgba(120,170,235,0)')
 
-      const px = (0.08 + 0.84 * ((i * 0.137 + 0.05) % 1)) * this.w + Math.sin(t * 0.4 + i) * 12
+    // 设置填充样式：应用底部光晕
+    ctx.fillStyle = halo
 
-      // 声明变量 py，用余弦让光点在垂直方向缓慢漂浮
+    // 调用方法：填充底部光晕
+    ctx.fillRect(0, 0, this.w, this.h)
 
-      const py = (0.1 + 0.8 * ((i * 0.219 + 0.03) % 1)) * this.h + Math.cos(t * 0.32 + i) * 16
+    // 调用方法：循环绘制 10 个缓慢漂浮的柔光粒子，保持画面干净不喧宾夺主
+    for (let i = 0; i < 10; i++) {
 
-      // 声明变量 r，根据序号生成 2 到 5 像素的光点半径
+      // 声明变量 px，用正弦让粒子水平缓慢漂移
+      const px = (0.1 + 0.8 * ((i * 0.173 + 0.07) % 1)) * this.w + Math.sin(t * 0.35 + i) * 10
 
-      const r = 2 + (i % 4)
+      // 声明变量 py，用余弦让粒子垂直缓慢漂浮
+      const py = (0.12 + 0.76 * ((i * 0.233 + 0.04) % 1)) * this.h + Math.cos(t * 0.28 + i) * 14
 
-      // 调用方法：开始绘制光点路径
+      // 声明变量 r，按序号生成 1.5 到 4 像素的粒子半径
+      const r = 1.5 + (i % 4)
 
+      // 调用方法：开始绘制粒子路径
       ctx.beginPath()
 
-      // 调用方法：绘制光点圆形
-
+      // 调用方法：绘制粒子圆形
       ctx.arc(px, py, r, 0, Math.PI * 2)
 
-      // 设置填充样式：使用低透明度品牌蓝，避免刺眼
+      // 设置填充样式：粒子使用低透明品牌蓝，柔和不刺眼
+      ctx.fillStyle = 'rgba(90,150,225,0.16)'
 
-      ctx.fillStyle = 'rgba(74,143,231,0.18)'
-
-      // 调用方法：填充光点
-
+      // 调用方法：填充粒子
       ctx.fill()
 
     }
@@ -738,51 +737,54 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawBody，绘制肩部、制服渐变、衣领与胸前工牌
-
+  // 定义方法 drawBody，绘制简约奶白上衣、浅蓝圆领与品牌蓝丝带点缀
   private drawBody(ctx: CanvasRenderingContext2D, happy: boolean, sad: boolean, breath: number) {
 
     // 调用方法：保存绘图状态，隔离身体绘制变换
 
     ctx.save()
 
-    // 声明变量 g，创建制服的纵向渐变（浅蓝到品牌蓝）
+    // 声明变量 g，创建上衣的纵向渐变（肩部明亮向底部柔和浅蓝过渡）
 
     const g = ctx.createLinearGradient(0, 60, 0, 220)
 
-    // 渐变停靠点：肩部使用明亮浅蓝
+    // 渐变停靠点：肩部使用明亮奶白
 
-    g.addColorStop(0, happy ? '#5aa0ef' : sad ? '#7c8aa6' : '#4a8fe7')
+    g.addColorStop(0, happy ? '#ffffff' : sad ? '#eef1f6' : '#fdfbf7')
 
-    // 渐变停靠点：底部使用沉稳品牌蓝
+    // 渐变停靠点：中段使用柔和浅蓝白
 
-    g.addColorStop(1, happy ? '#2f6fd0' : sad ? '#4c5871' : '#2b64bd')
+    g.addColorStop(0.55, happy ? '#f4f9ff' : sad ? '#dfe5ee' : '#eef3fa')
 
-    // 设置填充样式：应用制服渐变
+    // 渐变停靠点：底部使用更实的浅蓝增加层次
+
+    g.addColorStop(1, happy ? '#e4eefb' : sad ? '#cbd3df' : '#dbe8f7')
+
+    // 设置填充样式：应用上衣渐变
 
     ctx.fillStyle = g
 
-    // 调用方法：开始绘制肩部轮廓路径
+    // 调用方法：开始绘制圆润肩部轮廓（无硬朗领型）
 
     ctx.beginPath()
 
-    // 调用方法：定位到肩部左下起点
+    // 调用方法：定位肩部左下起点
 
     ctx.moveTo(-158, 220)
 
-    // 调用方法：用二次贝塞尔曲线描绘左肩到颈部
+    // 调用方法：用二次贝塞尔曲线描绘左肩到领口
 
-    ctx.quadraticCurveTo(-150, 82, -58, 58)
+    ctx.quadraticCurveTo(-150, 86, -60, 62)
 
-    // 调用方法：连接左右领口
+    // 调用方法：用柔和弧线描绘领口凹陷
 
-    ctx.lineTo(58, 58)
+    ctx.quadraticCurveTo(0, 78, 60, 62)
 
     // 调用方法：用二次贝塞尔曲线描绘右肩
 
-    ctx.quadraticCurveTo(150, 82, 158, 220)
+    ctx.quadraticCurveTo(150, 86, 158, 220)
 
-    // 调用方法：闭合肩部路径回到起点
+    // 调用方法：闭合肩部路径
 
     ctx.closePath()
 
@@ -790,89 +792,347 @@ export class CartoonAvatarEngine {
 
     ctx.fill()
 
-    // 调用方法：绘制白色内衬 V 形衣领
+    // 调用方法：保存状态，绘制肩部柔和受光高光，增加布料立体层次
+
+    ctx.save()
+
+    // 声明变量 shoulderGlow，创建肩部左侧的斜向高光渐变
+
+    const shoulderGlow = ctx.createLinearGradient(-150, 80, 40, 200)
+
+    // 渐变停靠点：高光起点使用半透明白
+
+    shoulderGlow.addColorStop(0, 'rgba(255,255,255,0.55)')
+
+    // 渐变停靠点：高光中段快速淡出
+
+    shoulderGlow.addColorStop(0.5, 'rgba(255,255,255,0.06)')
+
+    // 渐变停靠点：高光末端完全透明
+
+    shoulderGlow.addColorStop(1, 'rgba(255,255,255,0)')
+
+    // 设置填充样式：应用肩部高光渐变
+
+    ctx.fillStyle = shoulderGlow
+
+    // 调用方法：以肩部轮廓作为高光的裁剪形状
 
     ctx.beginPath()
 
-    // 调用方法：定位左领口外端
+    // 调用方法：重描肩部左起点
 
-    ctx.moveTo(-52, 60)
+    ctx.moveTo(-158, 220)
 
-    // 调用方法：连线到领口中心下方形成 V 形
+    // 调用方法：重描左肩曲线
 
-    ctx.lineTo(0, 132)
+    ctx.quadraticCurveTo(-150, 86, -60, 62)
 
-    // 调用方法：连线到右领口外端
+    // 调用方法：重描领口弧线
 
-    ctx.lineTo(52, 60)
+    ctx.quadraticCurveTo(0, 78, 60, 62)
 
-    // 调用方法：用曲线收回到左领口，形成领片
+    // 调用方法：重描右肩曲线
 
-    ctx.quadraticCurveTo(0, 96, -52, 60)
+    ctx.quadraticCurveTo(150, 86, 158, 220)
 
-    // 调用方法：闭合领片路径
+    // 调用方法：闭合高光区域
 
     ctx.closePath()
 
-    // 设置填充样式：内衬使用柔和米白
-
-    ctx.fillStyle = '#f4f9ff'
-
-    // 调用方法：填充衣领
+    // 调用方法：填充肩部高光
 
     ctx.fill()
 
-    // 调用方法：绘制品牌蓝领带/丝巾
+    // 调用方法：恢复高光绘制状态
+
+    ctx.restore()
+
+    // 调用方法：循环绘制简洁衣褶，让衣料不平板且随呼吸轻微起伏
+
+    for (let i = 0; i < 2; i++) {
+
+      // 声明变量 foldY，按序号计算褶皱起始高度
+
+      const foldY = 118 + i * 34
+
+      // 声明变量 foldX，左侧褶皱随呼吸轻微起伏
+
+      const foldX = -120 + i * 8 + breath * 1.2
+
+      // 调用方法：开始绘制左侧褶皱
+
+      ctx.beginPath()
+
+      // 调用方法：定位左侧褶皱起点
+
+      ctx.moveTo(foldX, foldY)
+
+      // 调用方法：用贝塞尔描绘褶皱的自然弯曲
+
+      ctx.bezierCurveTo(foldX + 24, foldY + 10, foldX + 16, foldY + 30, foldX + 44, foldY + 48)
+
+      // 设置描边样式：褶皱使用低透明蓝灰表现布纹阴影
+
+      ctx.strokeStyle = 'rgba(120,150,190,0.16)'
+
+      // 设置线宽：褶皱保持纤细
+
+      ctx.lineWidth = 2
+
+      // 设置线帽：圆头褶皱
+
+      ctx.lineCap = 'round'
+
+      // 调用方法：描边左侧褶皱
+
+      ctx.stroke()
+
+      // 调用方法：开始绘制右侧对称褶皱
+
+      ctx.beginPath()
+
+      // 调用方法：定位右侧褶皱起点
+
+      ctx.moveTo(-foldX, foldY)
+
+      // 调用方法：用贝塞尔描绘右侧褶皱
+
+      ctx.bezierCurveTo(-foldX - 24, foldY + 10, -foldX - 16, foldY + 30, -foldX - 44, foldY + 48)
+
+      // 调用方法：描边右侧褶皱
+
+      ctx.stroke()
+
+    }
+
+    // 声明变量 collarG，创建浅蓝罗纹圆领的渐变
+
+    const collarG = ctx.createLinearGradient(0, 62, 0, 96)
+
+    // 渐变停靠点：领口顶部使用柔和浅蓝
+
+    collarG.addColorStop(0, '#cfe0f6')
+
+    // 渐变停靠点：领口底部使用略深品牌蓝
+
+    collarG.addColorStop(1, '#a9c8ee')
+
+    // 设置描边样式：应用圆领渐变
+
+    ctx.strokeStyle = collarG
+
+    // 设置线宽：圆领保持适中宽度体现罗纹质感
+
+    ctx.lineWidth = 9
+
+    // 调用方法：开始绘制圆领弧线
 
     ctx.beginPath()
 
-    // 调用方法：定位领带上端
+    // 调用方法：定位圆领左端
 
-    ctx.moveTo(-9, 92)
+    ctx.moveTo(-44, 66)
 
-    // 调用方法：连线到领带尖端左侧
+    // 调用方法：用二次曲线描绘圆领弧度
 
-    ctx.lineTo(0, 172)
+    ctx.quadraticCurveTo(0, 90, 44, 66)
 
-    // 调用方法：连线到领带尖端右侧
+    // 调用方法：描边圆领
 
-    ctx.lineTo(9, 92)
+    ctx.stroke()
 
-    // 调用方法：闭合领带路径
+    // 设置描边样式：领口内侧使用柔和暖灰表现深度
+
+    ctx.strokeStyle = 'rgba(150,120,100,0.16)'
+
+    // 设置线宽：内阴影保持纤细
+
+    ctx.lineWidth = 2
+
+    // 调用方法：开始绘制领口内阴影
+
+    ctx.beginPath()
+
+    // 调用方法：定位内阴影左端
+
+    ctx.moveTo(-40, 70)
+
+    // 调用方法：用二次曲线描绘内阴影弧度
+
+    ctx.quadraticCurveTo(0, 92, 40, 70)
+
+    // 调用方法：描边内阴影
+
+    ctx.stroke()
+
+    // 调用方法：保存状态，绘制品牌蓝丝带蝴蝶结并随呼吸轻微起伏
+
+    ctx.save()
+
+    // 调用方法：将原点移动到领口中央
+
+    ctx.translate(0, 84 + breath * 0.8)
+
+    // 声明变量 ribbonG，创建丝带渐变（增加垂坠质感）
+
+    const ribbonG = ctx.createLinearGradient(-18, 0, 18, 0)
+
+    // 渐变停靠点：丝带左侧使用明亮品牌蓝
+
+    ribbonG.addColorStop(0, happy ? '#63a8f2' : sad ? '#93a0b4' : '#4a8fe7')
+
+    // 渐变停靠点：丝带右侧使用沉稳品牌蓝
+
+    ribbonG.addColorStop(1, happy ? '#3f83e0' : sad ? '#6b7789' : '#2f6fd0')
+
+    // 设置填充样式：应用丝带渐变
+
+    ctx.fillStyle = ribbonG
+
+    // 调用方法：绘制左侧蝴蝶结
+
+    ctx.beginPath()
+
+    // 调用方法：定位左结中心
+
+    ctx.moveTo(0, 0)
+
+    // 调用方法：描绘左结上缘
+
+    ctx.quadraticCurveTo(-18, -10, -18, 2)
+
+    // 调用方法：描绘左结下缘收拢
+
+    ctx.quadraticCurveTo(-18, 12, 0, 4)
+
+    // 调用方法：闭合左结
 
     ctx.closePath()
 
-    // 设置填充样式：领带使用略深的品牌蓝
-
-    ctx.fillStyle = '#1e4f9e'
-
-    // 调用方法：填充领带
+    // 调用方法：填充左结
 
     ctx.fill()
 
-    // 声明变量 badgeY，让工牌随呼吸轻微起伏
+    // 调用方法：绘制右侧蝴蝶结
 
-    const badgeY = 150 + breath * 1.5
+    ctx.beginPath()
 
-    // 调用方法：绘制胸前工牌外框
+    // 调用方法：定位右结中心
 
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.moveTo(0, 0)
 
-    // 调用方法：绘制圆角工牌矩形（用普通矩形近似，保持简洁）
+    // 调用方法：描绘右结上缘
 
-    ctx.fillRect(74, badgeY, 40, 26)
+    ctx.quadraticCurveTo(18, -10, 18, 2)
 
-    // 设置填充样式：工牌文字条使用品牌蓝
+    // 调用方法：描绘右结下缘收拢
 
-    ctx.fillStyle = '#4a8fe7'
+    ctx.quadraticCurveTo(18, 12, 0, 4)
 
-    // 调用方法：绘制工牌内的文字占位条
+    // 调用方法：闭合右结
 
-    ctx.fillRect(79, badgeY + 7, 30, 4)
+    ctx.closePath()
 
-    // 调用方法：绘制第二条文字占位条
+    // 调用方法：填充右结
 
-    ctx.fillRect(79, badgeY + 15, 20, 4)
+    ctx.fill()
+
+    // 调用方法：绘制蝴蝶结中心结
+
+    ctx.beginPath()
+
+    // 调用方法：以圆形描绘中心结
+
+    ctx.arc(0, 2, 4.5, 0, Math.PI * 2)
+
+    // 调用方法：填充中心结
+
+    ctx.fill()
+
+    // 调用方法：绘制左侧飘带
+
+    ctx.beginPath()
+
+    // 调用方法：定位左飘带起点
+
+    ctx.moveTo(-3, 5)
+
+    // 调用方法：描绘左飘带外缘
+
+    ctx.quadraticCurveTo(-7, 20, -12, 26)
+
+    // 调用方法：描绘左飘带内缘收拢
+
+    ctx.quadraticCurveTo(-4, 22, -1, 8)
+
+    // 调用方法：闭合左飘带
+
+    ctx.closePath()
+
+    // 调用方法：填充左飘带
+
+    ctx.fill()
+
+    // 调用方法：绘制右侧飘带
+
+    ctx.beginPath()
+
+    // 调用方法：定位右飘带起点
+
+    ctx.moveTo(3, 5)
+
+    // 调用方法：描绘右飘带外缘
+
+    ctx.quadraticCurveTo(7, 18, 12, 22)
+
+    // 调用方法：描绘右飘带内缘收拢
+
+    ctx.quadraticCurveTo(4, 20, 1, 8)
+
+    // 调用方法：闭合右飘带
+
+    ctx.closePath()
+
+    // 调用方法：填充右飘带
+
+    ctx.fill()
+
+    // 调用方法：恢复丝带绘制状态
+
+    ctx.restore()
+
+    // 调用方法：绘制胸前小小的品牌色圆点徽章，简约不刺眼
+
+    ctx.beginPath()
+
+    // 调用方法：以圆形描绘徽章外圈
+
+    ctx.arc(66, 150, 5, 0, Math.PI * 2)
+
+    // 设置填充样式：徽章外圈使用低饱和品牌蓝
+
+    ctx.fillStyle = 'rgba(74,143,231,0.55)'
+
+    // 调用方法：填充徽章外圈
+
+    ctx.fill()
+
+    // 调用方法：绘制徽章高光点
+
+    ctx.beginPath()
+
+    // 调用方法：以小圆描绘徽章高光
+
+    ctx.arc(66, 150, 2, 0, Math.PI * 2)
+
+    // 设置填充样式：高光使用近白
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+
+    // 调用方法：填充徽章高光
+
+    ctx.fill()
 
     // 调用方法：恢复绘图状态，结束身体绘制
 
@@ -882,33 +1142,112 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawNeck，绘制脖颈及其柔和阴影
-
+  // 定义方法 drawNeck，绘制白皙脖颈及其柔和阴影
   private drawNeck(ctx: CanvasRenderingContext2D) {
 
     // 调用方法：保存绘图状态，隔离脖颈绘制
 
     ctx.save()
 
-    // 声明变量 g，创建脖颈肤色渐变（上深下浅制造立体感）
+    // 声明变量 g，创建脖颈的横向圆柱渐变（两侧深、中间亮，制造立体感）
 
-    const g = ctx.createLinearGradient(0, 8, 0, 70)
+    const g = ctx.createLinearGradient(-26, 0, 26, 0)
 
-    // 渐变停靠点：颈部上方使用较深肤色作阴影
+    // 渐变停靠点：左侧使用深肤色作阴影
 
-    g.addColorStop(0, '#e0ac86')
+    g.addColorStop(0, '#efc3a3')
 
-    // 渐变停靠点：颈部下方使用自然肤色
+    // 渐变停靠点：中部使用明亮白皙肤色
 
-    g.addColorStop(1, '#ffd7b6')
+    g.addColorStop(0.5, '#ffe0c6')
+
+    // 渐变停靠点：右侧使用稍深肤色
+
+    g.addColorStop(1, '#ecbe9c')
 
     // 设置填充样式：应用脖颈渐变
 
     ctx.fillStyle = g
 
-    // 调用方法：绘制脖颈圆角矩形（用普通矩形近似）
+    // 调用方法：开始绘制脖颈路径（上宽下略收的圆润形状）
 
-    ctx.fillRect(-25, 20, 50, 54)
+    ctx.beginPath()
+
+    // 调用方法：定位脖颈左上
+
+    ctx.moveTo(-24, 18)
+
+    // 调用方法：描绘左侧收拢曲线
+
+    ctx.bezierCurveTo(-26, 40, -24, 62, -20, 76)
+
+    // 调用方法：描绘脖颈底部圆润过渡
+
+    ctx.quadraticCurveTo(0, 84, 20, 76)
+
+    // 调用方法：描绘右侧收拢曲线
+
+    ctx.bezierCurveTo(24, 62, 26, 40, 24, 18)
+
+    // 调用方法：描绘脖颈顶部弧线
+
+    ctx.quadraticCurveTo(0, 28, -24, 18)
+
+    // 调用方法：闭合脖颈路径
+
+    ctx.closePath()
+
+    // 调用方法：填充脖颈
+
+    ctx.fill()
+
+    // 声明变量 shadow，创建下颌落在颈部的柔和投影渐变
+
+    const shadow = ctx.createLinearGradient(0, 16, 0, 48)
+
+    // 渐变停靠点：投影顶部使用暖棕色
+
+    shadow.addColorStop(0, 'rgba(140,90,66,0.24)')
+
+    // 渐变停靠点：投影底部淡出为透明
+
+    shadow.addColorStop(1, 'rgba(140,90,66,0)')
+
+    // 设置填充样式：应用下颌投影渐变
+
+    ctx.fillStyle = shadow
+
+    // 调用方法：以椭圆描绘下颌投影范围
+
+    ctx.beginPath()
+
+    // 调用方法：绘制投影椭圆
+
+    ctx.ellipse(0, 30, 26, 20, 0, 0, Math.PI * 2)
+
+    // 调用方法：填充下颌投影
+
+    ctx.fill()
+
+    // 声明变量 fade，创建脖颈底部的柔和淡出，让皮肤自然融入圆领
+
+    const fade = ctx.createLinearGradient(0, 60, 0, 84)
+
+    // 渐变停靠点：淡出顶部完全透明
+
+    fade.addColorStop(0, 'rgba(255,224,198,0)')
+
+    // 渐变停靠点：淡出底部使用柔和肤色过渡
+
+    fade.addColorStop(1, 'rgba(255,224,198,0.55)')
+
+    // 设置填充样式：应用底部过渡渐变
+
+    ctx.fillStyle = fade
+
+    // 调用方法：填充脖颈底部过渡区域
+
+    ctx.fillRect(-26, 60, 52, 24)
 
     // 调用方法：恢复绘图状态，结束脖颈绘制
 
@@ -918,53 +1257,76 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawBackHair，绘制位于脸型之后的后层头发
-
+  // 定义方法 drawBackHair，绘制垂至肩下的柔顺深棕长发后层
   private drawBackHair(ctx: CanvasRenderingContext2D) {
 
     // 调用方法：保存绘图状态，隔离后层头发绘制
 
     ctx.save()
 
-    // 声明变量 g，创建发色渐变（深蓝黑到藏青）
+    // 声明变量 g，创建深棕发色渐变（顶部暖棕高光向发尾深棕过渡）
 
-    const g = ctx.createLinearGradient(0, -160, 0, 60)
+    const g = ctx.createLinearGradient(0, -170, 0, 130)
 
-    // 渐变停靠点：顶部使用深蓝黑
+    // 渐变停靠点：顶部使用暖棕高光
 
-    g.addColorStop(0, '#23304a')
+    g.addColorStop(0, '#5a3d2e')
 
-    // 渐变停靠点：底部使用藏青蓝
+    // 渐变停靠点：中部使用深棕主色
 
-    g.addColorStop(1, '#1a2438')
+    g.addColorStop(0.45, '#3d2820')
+
+    // 渐变停靠点：发尾使用更深的棕黑
+
+    g.addColorStop(1, '#241813')
 
     // 设置填充样式：应用发色渐变
 
     ctx.fillStyle = g
 
-    // 调用方法：开始绘制后层头发轮廓
+    // 调用方法：开始绘制后层长发整体轮廓（头顶圆弧加两侧垂肩长发绺）
 
     ctx.beginPath()
 
-    // 调用方法：定位左侧发梢起点
+    // 调用方法：定位左侧发际起点
 
-    ctx.moveTo(-84, -20)
+    ctx.moveTo(-92, -10)
 
     // 调用方法：用贝塞尔曲线描绘左侧发际至头顶
 
-    ctx.bezierCurveTo(-100, -120, -70, -160, 0, -160)
+    ctx.bezierCurveTo(-108, -120, -72, -168, 0, -168)
 
     // 调用方法：用贝塞尔曲线描绘右侧发际
 
-    ctx.bezierCurveTo(70, -160, 100, -120, 84, -20)
+    ctx.bezierCurveTo(72, -168, 108, -120, 92, -10)
 
-    // 调用方法：用曲线收拢右侧发梢
+    // 调用方法：描绘右侧垂肩长发绺外缘
 
-    ctx.quadraticCurveTo(70, 24, 58, 10)
+    ctx.quadraticCurveTo(100, 70, 86, 132)
 
-    // 调用方法：用曲线收拢左侧发梢
+    // 调用方法：描绘右侧发梢圆润收拢
 
-    ctx.quadraticCurveTo(0, 40, -58, 10)
+    ctx.quadraticCurveTo(74, 150, 62, 128)
+
+    // 调用方法：描绘右侧发绺内缘回到发际
+
+    ctx.quadraticCurveTo(66, 40, 52, -6)
+
+    // 调用方法：描绘底部发丝过渡连接左侧
+
+    ctx.quadraticCurveTo(0, 30, -52, -6)
+
+    // 调用方法：描绘左侧发绺内缘
+
+    ctx.quadraticCurveTo(-66, 40, -62, 128)
+
+    // 调用方法：描绘左侧发梢圆润收拢
+
+    ctx.quadraticCurveTo(-74, 150, -86, 132)
+
+    // 调用方法：闭合左侧发绺外缘回到起点
+
+    ctx.quadraticCurveTo(-100, 70, -92, -10)
 
     // 调用方法：闭合后层头发路径
 
@@ -974,6 +1336,74 @@ export class CartoonAvatarEngine {
 
     ctx.fill()
 
+    // 声明变量 gloss，创建后层头发的暖棕高光带，增加发丝层次
+
+    const gloss = ctx.createLinearGradient(-78, -150, -30, -20)
+
+    // 渐变停靠点：高光起点使用半透明暖棕
+
+    gloss.addColorStop(0, 'rgba(180,130,95,0.30)')
+
+    // 渐变停靠点：高光末端淡出为透明
+
+    gloss.addColorStop(1, 'rgba(180,130,95,0)')
+
+    // 设置填充样式：应用后发高光渐变
+
+    ctx.fillStyle = gloss
+
+    // 调用方法：描绘左侧发丝高光带
+
+    ctx.beginPath()
+
+    // 调用方法：定位高光带上缘起点
+
+    ctx.moveTo(-64, -138)
+
+    // 调用方法：用曲线描绘高光带外缘
+
+    ctx.quadraticCurveTo(-86, -70, -72, 4)
+
+    // 调用方法：用曲线描绘高光带内缘收拢
+
+    ctx.quadraticCurveTo(-58, -60, -46, -126)
+
+    // 调用方法：闭合高光带
+
+    ctx.closePath()
+
+    // 调用方法：填充高光带
+
+    ctx.fill()
+
+    // 设置描边样式：右侧发绺使用低透明暖棕反光
+
+    ctx.strokeStyle = 'rgba(190,140,105,0.22)'
+
+    // 设置线宽：反光保持纤细
+
+    ctx.lineWidth = 3
+
+    // 设置线帽：圆头反光
+
+    ctx.lineCap = 'round'
+
+    // 调用方法：绘制右侧发绺柔和反光
+
+    ctx.beginPath()
+
+    // 调用方法：定位反光起点
+
+    ctx.moveTo(70, -110)
+
+    // 调用方法：描绘反光弧线
+
+    ctx.quadraticCurveTo(86, -50, 76, 30)
+
+    // 调用方法：描边反光
+
+    ctx.stroke()
+
     // 调用方法：恢复绘图状态，结束后层头发绘制
 
     ctx.restore()
@@ -982,25 +1412,28 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawFace，绘制精致脸型与耳朵
-
+  // 定义方法 drawFace，绘制圆润可爱的精致脸型与耳朵
   private drawFace(ctx: CanvasRenderingContext2D) {
 
     // 调用方法：保存绘图状态，隔离脸型绘制
 
     ctx.save()
 
-    // 声明变量 g，创建脸型肤色渐变（上亮下暗的柔和过渡）
+    // 声明变量 g，创建脸型肤色渐变（额头高光向自然白皙肤色柔和过渡）
 
-    const g = ctx.createLinearGradient(0, -150, 0, 40)
+    const g = ctx.createLinearGradient(0, -150, 0, 30)
 
-    // 渐变停靠点：额头使用明亮肤色
+    // 渐变停靠点：额头使用明亮暖白肤色
 
-    g.addColorStop(0, '#ffe2c6')
+    g.addColorStop(0, '#fff2e4')
 
-    // 渐变停靠点：下巴使用自然肤色
+    // 渐变停靠点：脸颊使用自然白皙肤色
 
-    g.addColorStop(1, '#ffd0ad')
+    g.addColorStop(0.55, '#ffe3c9')
+
+    // 渐变停靠点：下巴使用柔和深肤色
+
+    g.addColorStop(1, '#ffd2b2')
 
     // 设置填充样式：应用脸型渐变
 
@@ -1010,13 +1443,49 @@ export class CartoonAvatarEngine {
 
     ctx.beginPath()
 
-    // 调用方法：以椭圆描绘脸型轮廓（水平半径 74，垂直半径 84，中心上移 62）
+    // 调用方法：以椭圆描绘圆润脸型轮廓（水平半径 73，垂直半径 82，中心上移 58）
 
-    ctx.ellipse(0, -62, 74, 84, 0, 0, Math.PI * 2)
+    ctx.ellipse(0, -58, 73, 82, 0, 0, Math.PI * 2)
 
     // 调用方法：填充脸型
 
     ctx.fill()
+
+    // 声明变量 volume，创建面部柔和体积阴影，让扁平脸型获得圆润立体感
+
+    const volume = ctx.createRadialGradient(-10, -76, 16, 0, -58, 96)
+
+    // 渐变停靠点：额头偏左使用柔和高光
+
+    volume.addColorStop(0, 'rgba(255,255,255,0.30)')
+
+    // 渐变停靠点：中部完全透明
+
+    volume.addColorStop(0.6, 'rgba(255,225,200,0)')
+
+    // 渐变停靠点：脸缘使用暖棕阴影收拢轮廓
+
+    volume.addColorStop(1, 'rgba(196,120,88,0.22)')
+
+    // 设置填充样式：应用面部体积渐变
+
+    ctx.fillStyle = volume
+
+    // 调用方法：沿用脸型路径填充体积光影
+
+    ctx.fill()
+
+    // 设置描边样式：柔和暖色轮廓弱化脸型与发丝、脖颈的硬边界
+
+    ctx.strokeStyle = 'rgba(214,158,124,0.28)'
+
+    // 设置线宽：脸部轮廓保持纤细
+
+    ctx.lineWidth = 1.4
+
+    // 调用方法：描边脸型轮廓
+
+    ctx.stroke()
 
     // 调用方法：绘制左侧耳朵
 
@@ -1024,11 +1493,11 @@ export class CartoonAvatarEngine {
 
     // 调用方法：以椭圆描绘左耳
 
-    ctx.ellipse(-74, -56, 10, 18, -0.1, 0, Math.PI * 2)
+    ctx.ellipse(-72, -52, 10, 17, -0.1, 0, Math.PI * 2)
 
     // 设置填充样式：耳朵使用稍深肤色
 
-    ctx.fillStyle = '#f6c8a4'
+    ctx.fillStyle = '#f7cbaa'
 
     // 调用方法：填充左耳
 
@@ -1040,7 +1509,7 @@ export class CartoonAvatarEngine {
 
     // 调用方法：以椭圆描绘右耳
 
-    ctx.ellipse(74, -56, 10, 18, 0.1, 0, Math.PI * 2)
+    ctx.ellipse(72, -52, 10, 17, 0.1, 0, Math.PI * 2)
 
     // 调用方法：填充右耳
 
@@ -1054,21 +1523,20 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawBrows，按情绪绘制不同倾斜度的柔和眉毛
-
+  // 定义方法 drawBrows，按情绪绘制不同倾斜度的柔和深棕弯眉
   private drawBrows(ctx: CanvasRenderingContext2D, happy: boolean, sad: boolean) {
 
     // 调用方法：保存绘图状态，隔离眉毛绘制
 
     ctx.save()
 
-    // 设置描边样式：使用深蓝棕色作为眉毛颜色
+    // 设置描边样式：使用深棕色作为眉毛颜色
 
-    ctx.strokeStyle = '#3a2e33'
+    ctx.strokeStyle = '#5a3b2c'
 
     // 设置线宽：眉毛描边宽度
 
-    ctx.lineWidth = 4.5
+    ctx.lineWidth = 4
 
     // 设置线帽：使用圆头让眉毛更柔和
 
@@ -1076,7 +1544,7 @@ export class CartoonAvatarEngine {
 
     // 声明变量 tilt，根据情绪决定眉毛倾斜方向（开心上扬、难过下垂）
 
-    const tilt = happy ? -5 : sad ? 6 : 0
+    const tilt = happy ? -4 : sad ? 5 : 0
 
     // 调用方法：开始绘制左眉路径
 
@@ -1084,11 +1552,11 @@ export class CartoonAvatarEngine {
 
     // 调用方法：用二次曲线描绘左眉，形成自然弧度
 
-    ctx.moveTo(-46, -92 + tilt)
+    ctx.moveTo(-46, -94 + tilt)
 
     // 调用方法：控制左眉弧线
 
-    ctx.quadraticCurveTo(-30, -100 + tilt, -16, -92)
+    ctx.quadraticCurveTo(-30, -102 + tilt, -16, -93)
 
     // 调用方法：描边左眉
 
@@ -1100,11 +1568,11 @@ export class CartoonAvatarEngine {
 
     // 调用方法：用二次曲线描绘右眉
 
-    ctx.moveTo(46, -92 + tilt)
+    ctx.moveTo(46, -94 + tilt)
 
     // 调用方法：控制右眉弧线
 
-    ctx.quadraticCurveTo(30, -100 + tilt, 16, -92)
+    ctx.quadraticCurveTo(30, -102 + tilt, 16, -93)
 
     // 调用方法：描边右眉
 
@@ -1119,7 +1587,6 @@ export class CartoonAvatarEngine {
   }
 
   // 定义方法 drawEyes，按眨眼与眼神微动绘制双眼
-
   private drawEyes(ctx: CanvasRenderingContext2D, blink: number, happy: boolean, now: number) {
 
     // 声明变量 openness，将闭眼程度换算为眼睛张开比例（0 闭合、1 张开）
@@ -1128,26 +1595,25 @@ export class CartoonAvatarEngine {
 
     // 声明变量 gazeX，用慢速正弦生成左右眼神微动偏移量
 
-    const gazeX = Math.sin(now / 1000 * 0.6 + this.gazeSeed) * 2.2
+    const gazeX = Math.sin(now / 1000 * 0.6 + this.gazeSeed) * 2.4
 
     // 声明变量 gazeY，用更慢的余弦生成上下眼神微动偏移量
 
-    const gazeY = Math.cos(now / 1000 * 0.45 + this.gazeSeed) * 1.2
+    const gazeY = Math.cos(now / 1000 * 0.45 + this.gazeSeed) * 1.3
 
     // 调用方法：绘制左眼
 
-    this.drawEye(ctx, -29, -66, openness, happy, gazeX, gazeY)
+    this.drawEye(ctx, -30, -64, openness, happy, gazeX, gazeY)
 
     // 调用方法：绘制右眼
 
-    this.drawEye(ctx, 29, -66, openness, happy, gazeX, gazeY)
+    this.drawEye(ctx, 30, -64, openness, happy, gazeX, gazeY)
 
   // drawEyes 方法结束
 
   }
 
-  // 定义方法 drawEye，绘制单只眼睛（眼白、虹膜、瞳孔、高光与睫毛）
-
+  // 定义方法 drawEye，绘制单只明亮大眼（眼白、暖棕虹膜、瞳孔、多重高光与睫毛）
   private drawEye(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -1170,9 +1636,9 @@ export class CartoonAvatarEngine {
 
     if (happy && openness > 0.6) {
 
-      // 设置描边样式：深蓝棕色眼线
+      // 设置描边样式：深棕色眼线
 
-      ctx.strokeStyle = '#2a2530'
+      ctx.strokeStyle = '#3a241a'
 
       // 设置线宽：笑眼描边宽度
 
@@ -1188,7 +1654,7 @@ export class CartoonAvatarEngine {
 
       // 调用方法：绘制向上弯的笑眼
 
-      ctx.arc(0, 6, 16, Math.PI * 1.1, Math.PI * 1.9)
+      ctx.arc(0, 6, 18, Math.PI * 1.12, Math.PI * 1.88)
 
       // 调用方法：描边笑眼
 
@@ -1196,17 +1662,17 @@ export class CartoonAvatarEngine {
 
     } else {
 
-      // 设置填充样式：眼白使用近白色
+      // 设置填充样式：眼白使用微带冷调的近白色，更显清透
 
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = '#fcfdff'
 
       // 调用方法：开始绘制眼白椭圆
 
       ctx.beginPath()
 
-      // 调用方法：按张开比例绘制眼白（纵向半径随闭眼压缩）
+      // 调用方法：按张开比例绘制大眼白（纵向半径随闭眼压缩）
 
-      ctx.ellipse(0, 0, 16, 19 * openness, 0, 0, Math.PI * 2)
+      ctx.ellipse(0, 0, 18, 20 * openness, 0, 0, Math.PI * 2)
 
       // 调用方法：填充眼白
 
@@ -1216,21 +1682,21 @@ export class CartoonAvatarEngine {
 
       if (openness > 0.35) {
 
-        // 声明变量 ig，创建虹膜径向渐变（外深内亮的浅蓝）
+        // 声明变量 ig，创建虹膜径向渐变（外深内亮的暖棕）
 
-        const ig = ctx.createRadialGradient(gazeX, gazeY, 1, gazeX, gazeY, 10 * openness)
+        const ig = ctx.createRadialGradient(gazeX, gazeY, 1, gazeX, gazeY, 12 * openness)
 
-        // 渐变停靠点：虹膜中心使用明亮浅蓝
+        // 渐变停靠点：虹膜中心使用明亮暖棕
 
-        ig.addColorStop(0, '#8fd0ff')
+        ig.addColorStop(0, '#d69a63')
 
-        // 渐变停靠点：虹膜中段使用品牌蓝
+        // 渐变停靠点：虹膜中段使用暖棕色
 
-        ig.addColorStop(0.6, '#4a8fe7')
+        ig.addColorStop(0.55, '#965e38')
 
-        // 渐变停靠点：虹膜外缘使用深蓝
+        // 渐变停靠点：虹膜外缘使用深棕
 
-        ig.addColorStop(1, '#1e4f9e')
+        ig.addColorStop(1, '#4a2c1c')
 
         // 设置填充样式：应用虹膜渐变
 
@@ -1240,17 +1706,17 @@ export class CartoonAvatarEngine {
 
         ctx.beginPath()
 
-        // 调用方法：绘制虹膜圆形，随眼神偏移
+        // 调用方法：绘制大虹膜圆，随眼神偏移
 
-        ctx.arc(gazeX, gazeY, 10 * openness, 0, Math.PI * 2)
+        ctx.arc(gazeX, gazeY, 12 * openness, 0, Math.PI * 2)
 
         // 调用方法：填充虹膜
 
         ctx.fill()
 
-        // 设置填充样式：瞳孔使用深蓝黑
+        // 设置填充样式：瞳孔使用深棕黑
 
-        ctx.fillStyle = '#152a4d'
+        ctx.fillStyle = '#241309'
 
         // 调用方法：开始绘制瞳孔
 
@@ -1258,13 +1724,13 @@ export class CartoonAvatarEngine {
 
         // 调用方法：绘制瞳孔圆
 
-        ctx.arc(gazeX, gazeY, 4.5 * openness, 0, Math.PI * 2)
+        ctx.arc(gazeX, gazeY, 5 * openness, 0, Math.PI * 2)
 
         // 调用方法：填充瞳孔
 
         ctx.fill()
 
-        // 设置填充样式：高光使用纯白
+        // 设置填充样式：主高光使用纯白
 
         ctx.fillStyle = '#ffffff'
 
@@ -1274,7 +1740,7 @@ export class CartoonAvatarEngine {
 
         // 调用方法：绘制虹膜左上方主高光
 
-        ctx.arc(gazeX - 3.5, gazeY - 3.5 * openness, 2.6, 0, Math.PI * 2)
+        ctx.arc(gazeX - 4, gazeY - 4 * openness, 3.2, 0, Math.PI * 2)
 
         // 调用方法：填充主高光
 
@@ -1286,19 +1752,39 @@ export class CartoonAvatarEngine {
 
         // 调用方法：绘制虹膜右下方次高光
 
-        ctx.arc(gazeX + 3, gazeY + 3 * openness, 1.4, 0, Math.PI * 2)
+        ctx.arc(gazeX + 3.5, gazeY + 3.5 * openness, 1.7, 0, Math.PI * 2)
 
         // 调用方法：填充次高光
 
         ctx.fill()
 
-        // 设置描边样式：上睫毛使用深蓝棕
+        // 设置描边样式：底部弧形反光增强眼睛通透感
 
-        ctx.strokeStyle = '#2a2530'
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'
+
+        // 设置线宽：反光保持纤细
+
+        ctx.lineWidth = 1.6
+
+        // 调用方法：开始绘制底部弧形反光
+
+        ctx.beginPath()
+
+        // 调用方法：沿虹膜下缘绘制反光弧
+
+        ctx.arc(gazeX, gazeY + 1, 8 * openness, Math.PI * 0.15, Math.PI * 0.5)
+
+        // 调用方法：描边底部反光
+
+        ctx.stroke()
+
+        // 设置描边样式：上眼线使用深棕色
+
+        ctx.strokeStyle = '#3a241a'
 
         // 设置线宽：睫毛线宽
 
-        ctx.lineWidth = 3
+        ctx.lineWidth = 3.4
 
         // 设置线帽：圆头睫毛线
 
@@ -1310,9 +1796,29 @@ export class CartoonAvatarEngine {
 
         // 调用方法：绘制覆盖眼白上缘的睫毛弧
 
-        ctx.arc(0, 0, 17, Math.PI * 1.05, Math.PI * 1.95)
+        ctx.arc(0, 0, 19, Math.PI * 1.05, Math.PI * 1.95)
 
         // 调用方法：描边睫毛
+
+        ctx.stroke()
+
+        // 设置描边样式：下睫毛使用低透明深棕
+
+        ctx.strokeStyle = 'rgba(58,36,26,0.5)'
+
+        // 设置线宽：下睫毛更纤细
+
+        ctx.lineWidth = 1.4
+
+        // 调用方法：开始绘制下睫毛弧线
+
+        ctx.beginPath()
+
+        // 调用方法：绘制眼白下缘的下睫毛弧
+
+        ctx.arc(0, 0, 19, Math.PI * 0.1, Math.PI * 0.75)
+
+        // 调用方法：描边下睫毛
 
         ctx.stroke()
 
@@ -1328,8 +1834,7 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawNose，绘制鼻部柔和阴影与高光
-
+  // 定义方法 drawNose，绘制小巧鼻部柔和阴影与高光
   private drawNose(ctx: CanvasRenderingContext2D) {
 
     // 调用方法：保存绘图状态，隔离鼻部绘制
@@ -1338,17 +1843,33 @@ export class CartoonAvatarEngine {
 
     // 设置填充样式：鼻影使用低透明度暖色
 
-    ctx.fillStyle = 'rgba(216,150,116,0.5)'
+    ctx.fillStyle = 'rgba(214,150,120,0.42)'
 
     // 调用方法：开始绘制鼻影路径
 
     ctx.beginPath()
 
-    // 调用方法：以椭圆描绘鼻尖柔和阴影
+    // 调用方法：以小椭圆描绘鼻尖柔和阴影
 
-    ctx.ellipse(0, -26, 5, 3.5, 0, 0, Math.PI * 2)
+    ctx.ellipse(0, -26, 4.5, 3, 0, 0, Math.PI * 2)
 
     // 调用方法：填充鼻影
+
+    ctx.fill()
+
+    // 设置填充样式：鼻尖高光使用半透明白
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+
+    // 调用方法：开始绘制鼻尖高光
+
+    ctx.beginPath()
+
+    // 调用方法：以小椭圆描绘鼻尖高光
+
+    ctx.ellipse(-1.2, -27.5, 1.6, 1.1, 0, 0, Math.PI * 2)
+
+    // 调用方法：填充鼻尖高光
 
     ctx.fill()
 
@@ -1360,8 +1881,7 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawMouth，按情绪与说话口型绘制嘴部
-
+  // 定义方法 drawMouth，按情绪与说话口型绘制亲切微笑的嘴部
   private drawMouth(
     ctx: CanvasRenderingContext2D,
     happy: boolean,
@@ -1391,7 +1911,7 @@ export class CartoonAvatarEngine {
 
       // 设置填充样式：口腔内部使用深玫红
 
-      ctx.fillStyle = '#8e2f42'
+      ctx.fillStyle = '#a8435a'
 
       // 调用方法：开始绘制口腔路径
 
@@ -1427,7 +1947,7 @@ export class CartoonAvatarEngine {
 
         // 设置填充样式：舌尖使用柔和粉色
 
-        ctx.fillStyle = '#e0747f'
+        ctx.fillStyle = '#e07f8a'
 
         // 调用方法：开始绘制舌尖
 
@@ -1445,7 +1965,7 @@ export class CartoonAvatarEngine {
 
       // 设置描边样式：唇线使用柔和玫红
 
-      ctx.strokeStyle = '#c65b6e'
+      ctx.strokeStyle = '#d16b7a'
 
       // 设置线宽：唇线描边宽度
 
@@ -1467,7 +1987,7 @@ export class CartoonAvatarEngine {
 
       // 设置描边样式：唇线使用柔和玫红
 
-      ctx.strokeStyle = '#c65b6e'
+      ctx.strokeStyle = '#d16b7a'
 
       // 设置线宽：唇线描边宽度
 
@@ -1491,11 +2011,11 @@ export class CartoonAvatarEngine {
 
         // 调用方法：控制微笑弧线中段
 
-        ctx.quadraticCurveTo(0, 16, 15, 4)
+        ctx.quadraticCurveTo(0, 17, 15, 4)
 
         // 调用方法：用二次曲线闭合上唇
 
-        ctx.quadraticCurveTo(0, 9, -15, 4)
+        ctx.quadraticCurveTo(0, 10, -15, 4)
 
       } else if (sad) {
 
@@ -1533,8 +2053,7 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawBlush，在两颊绘制柔和粉嫩腮红
-
+  // 定义方法 drawBlush，在两颊绘制柔和粉嫩腮红与高光点
   private drawBlush(ctx: CanvasRenderingContext2D, happy: boolean) {
 
     // 调用方法：保存绘图状态，隔离腮红绘制
@@ -1543,11 +2062,11 @@ export class CartoonAvatarEngine {
 
     // 声明变量 alpha，开心时腮红更明显、平时更淡雅
 
-    const alpha = happy ? 0.32 : 0.2
+    const alpha = happy ? 0.34 : 0.22
 
     // 设置填充样式：使用柔和粉色半透明
 
-    ctx.fillStyle = `rgba(240,138,148,${alpha.toFixed(3)})`
+    ctx.fillStyle = `rgba(242,140,150,${alpha.toFixed(3)})`
 
     // 调用方法：绘制左颊腮红
 
@@ -1555,7 +2074,7 @@ export class CartoonAvatarEngine {
 
     // 调用方法：以椭圆描绘左侧腮红
 
-    ctx.ellipse(-48, -42, 14, 8, 0, 0, Math.PI * 2)
+    ctx.ellipse(-50, -40, 15, 8.5, 0, 0, Math.PI * 2)
 
     // 调用方法：填充左侧腮红
 
@@ -1567,9 +2086,37 @@ export class CartoonAvatarEngine {
 
     // 调用方法：以椭圆描绘右侧腮红
 
-    ctx.ellipse(48, -42, 14, 8, 0, 0, Math.PI * 2)
+    ctx.ellipse(50, -40, 15, 8.5, 0, 0, Math.PI * 2)
 
     // 调用方法：填充右侧腮红
+
+    ctx.fill()
+
+    // 设置填充样式：腮红高光使用半透明白
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+
+    // 调用方法：绘制左颊高光点
+
+    ctx.beginPath()
+
+    // 调用方法：以小圆描绘左侧高光
+
+    ctx.arc(-52, -42, 2.5, 0, Math.PI * 2)
+
+    // 调用方法：填充左侧高光
+
+    ctx.fill()
+
+    // 调用方法：绘制右颊高光点
+
+    ctx.beginPath()
+
+    // 调用方法：以小圆描绘右侧高光
+
+    ctx.arc(48, -42, 2.5, 0, Math.PI * 2)
+
+    // 调用方法：填充右侧高光
 
     ctx.fill()
 
@@ -1581,57 +2128,72 @@ export class CartoonAvatarEngine {
 
   }
 
-  // 定义方法 drawFrontHair，绘制前层刘海与柔和发丝高光
-
+  // 定义方法 drawFrontHair，绘制空气刘海与柔暖发丝高光
   private drawFrontHair(ctx: CanvasRenderingContext2D) {
 
     // 调用方法：保存绘图状态，隔离前层头发绘制
 
     ctx.save()
 
-    // 声明变量 g，创建刘海渐变（深蓝黑到藏青）
+    // 声明变量 g，创建空气刘海渐变（顶部暖棕高光向发尾深棕过渡）
 
-    const g = ctx.createLinearGradient(0, -160, 0, -40)
+    const g = ctx.createLinearGradient(0, -172, 0, -70)
 
-    // 渐变停靠点：顶部使用深蓝黑
+    // 渐变停靠点：顶部使用暖棕高光
 
-    g.addColorStop(0, '#283654')
+    g.addColorStop(0, '#5a3d2e')
 
-    // 渐变停靠点：发尾使用藏青蓝
+    // 渐变停靠点：中部使用深棕主色
 
-    g.addColorStop(1, '#1c2740')
+    g.addColorStop(0.5, '#3d2820')
+
+    // 渐变停靠点：发尾使用深棕黑
+
+    g.addColorStop(1, '#2a1b16')
 
     // 设置填充样式：应用刘海渐变
 
     ctx.fillStyle = g
 
-    // 调用方法：开始绘制前层刘海路径
+    // 调用方法：开始绘制空气刘海整体路径（轻薄、眉上、几缕分开）
 
     ctx.beginPath()
 
     // 调用方法：定位左侧刘海起点
 
-    ctx.moveTo(-76, -70)
+    ctx.moveTo(-78, -66)
 
     // 调用方法：用贝塞尔曲线描绘左侧发际至头顶
 
-    ctx.bezierCurveTo(-84, -150, -50, -166, 0, -166)
+    ctx.bezierCurveTo(-88, -150, -52, -170, 0, -170)
 
     // 调用方法：用贝塞尔曲线描绘右侧发际
 
-    ctx.bezierCurveTo(50, -166, 84, -150, 76, -70)
+    ctx.bezierCurveTo(52, -170, 88, -150, 78, -66)
 
-    // 调用方法：绘制右侧刘海底缘弧线
+    // 调用方法：绘制右侧第一缕空气刘海底缘
 
-    ctx.quadraticCurveTo(52, -96, 34, -90)
+    ctx.quadraticCurveTo(64, -92, 50, -84)
 
-    // 调用方法：绘制中段刘海底缘弧线
+    // 调用方法：绘制右侧第二缕空气刘海底缘
 
-    ctx.quadraticCurveTo(6, -104, -10, -92)
+    ctx.quadraticCurveTo(40, -100, 26, -88)
 
-    // 调用方法：绘制左侧刘海底缘弧线回到起点
+    // 调用方法：绘制中部空气刘海底缘
 
-    ctx.quadraticCurveTo(-46, -98, -76, -70)
+    ctx.quadraticCurveTo(14, -102, 2, -88)
+
+    // 调用方法：绘制中左空气刘海底缘
+
+    ctx.quadraticCurveTo(-10, -100, -24, -86)
+
+    // 调用方法：绘制左侧第二缕空气刘海底缘
+
+    ctx.quadraticCurveTo(-40, -98, -54, -84)
+
+    // 调用方法：绘制左侧第一缕空气刘海底缘回到起点
+
+    ctx.quadraticCurveTo(-68, -94, -78, -66)
 
     // 调用方法：闭合刘海路径
 
@@ -1641,13 +2203,61 @@ export class CartoonAvatarEngine {
 
     ctx.fill()
 
-    // 设置描边样式：发丝高光使用半透明浅蓝
+    // 声明变量 sheen，创建刘海顶部的宽幅柔和高光，赋予丝绸般光泽
 
-    ctx.strokeStyle = 'rgba(150,190,240,0.28)'
+    const sheen = ctx.createLinearGradient(0, -170, 0, -116)
+
+    // 渐变停靠点：高光顶部使用半透明暖棕
+
+    sheen.addColorStop(0, 'rgba(210,160,120,0.28)')
+
+    // 渐变停靠点：高光底部淡出为透明
+
+    sheen.addColorStop(1, 'rgba(210,160,120,0)')
+
+    // 设置填充样式：应用刘海高光渐变
+
+    ctx.fillStyle = sheen
+
+    // 调用方法：描绘刘海高光带
+
+    ctx.beginPath()
+
+    // 调用方法：定位高光带左侧起点
+
+    ctx.moveTo(-62, -120)
+
+    // 调用方法：用曲线描绘高光带上缘
+
+    ctx.quadraticCurveTo(-38, -160, 0, -164)
+
+    // 调用方法：用曲线描绘高光带上缘右侧
+
+    ctx.quadraticCurveTo(38, -160, 62, -120)
+
+    // 调用方法：用曲线描绘高光带下缘右侧
+
+    ctx.quadraticCurveTo(30, -142, 0, -140)
+
+    // 调用方法：用曲线描绘高光带下缘左侧
+
+    ctx.quadraticCurveTo(-30, -142, -62, -120)
+
+    // 调用方法：闭合高光带
+
+    ctx.closePath()
+
+    // 调用方法：填充高光带
+
+    ctx.fill()
+
+    // 设置描边样式：发丝高光使用半透明暖棕
+
+    ctx.strokeStyle = 'rgba(205,155,115,0.4)'
 
     // 设置线宽：发丝高光保持纤细
 
-    ctx.lineWidth = 2.5
+    ctx.lineWidth = 2.4
 
     // 设置线帽：圆头发丝
 
@@ -1659,11 +2269,11 @@ export class CartoonAvatarEngine {
 
     // 调用方法：描绘左侧弧形高光
 
-    ctx.moveTo(-54, -138)
+    ctx.moveTo(-52, -136)
 
     // 调用方法：控制左侧高光弧线
 
-    ctx.quadraticCurveTo(-34, -156, -6, -152)
+    ctx.quadraticCurveTo(-32, -156, -6, -152)
 
     // 调用方法：描边左侧高光
 
@@ -1675,13 +2285,29 @@ export class CartoonAvatarEngine {
 
     // 调用方法：描绘右侧弧形高光
 
-    ctx.moveTo(24, -154)
+    ctx.moveTo(22, -154)
 
     // 调用方法：控制右侧高光弧线
 
-    ctx.quadraticCurveTo(48, -150, 60, -126)
+    ctx.quadraticCurveTo(46, -150, 58, -128)
 
     // 调用方法：描边右侧高光
+
+    ctx.stroke()
+
+    // 调用方法：绘制中部细高光，进一步丰富发丝层次
+
+    ctx.beginPath()
+
+    // 调用方法：描绘中部短弧高光
+
+    ctx.moveTo(-6, -158)
+
+    // 调用方法：控制中部高光弧线
+
+    ctx.quadraticCurveTo(6, -156, 18, -158)
+
+    // 调用方法：描边中部高光
 
     ctx.stroke()
 
@@ -1692,6 +2318,7 @@ export class CartoonAvatarEngine {
   // drawFrontHair 方法结束
 
   }
+
 
 // CartoonAvatarEngine 类结束
 

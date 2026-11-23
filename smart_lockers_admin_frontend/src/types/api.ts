@@ -100,6 +100,12 @@ export interface Device {
   // 定义对象属性 code，取值为 string
 
   code: string
+  // 定义对象属性 device_sn，取值为 string；IoT 设备序列号 @ticket B端-IoT中台
+
+  device_sn?: string
+  // 定义对象属性 firmware，取值为 string；当前固件版本 @ticket B端-IoT中台
+
+  firmware?: string
   // 定义对象属性 type，取值为 string
 
   type: string
@@ -226,10 +232,130 @@ export const PERMISSIONS: Record<AdminRole, string[]> = {
   user: ['site:read'],
   // 修复偏差5：权限点统一为后端 rbac.go 定义的 device:control，原 device:ctl 前端无法命中后端鉴权 @ticket B端-前端
 
-  site_admin: ['site:read', 'site:write', 'device:read', 'device:control', 'reconcile:read', 'alarm:read', 'alarm:handle',],
+  site_admin: ['site:read', 'site:write', 'device:read', 'device:control', 'ota:manage', 'reconcile:read', 'alarm:read', 'alarm:handle',],
   // 定义对象属性 operator，取值为含 device:control 的权限列表
 
-  operator: ['site:read', 'site:write', 'device:read', 'device:control', 'reconcile:read', 'reconcile:run', 'alarm:read', 'alarm:handle', 'audit:read'],
+  operator: ['site:read', 'site:write', 'device:read', 'device:control', 'ota:manage', 'reconcile:read', 'reconcile:run', 'alarm:read', 'alarm:handle', 'audit:read'],
+// 当前代码块结束
+
+}
+
+// IoT 指令记录 @ticket B端-IoT中台
+// 导出 interface DeviceCommand {，供其他模块引用
+
+export interface DeviceCommand {
+  // 定义对象属性 id，取值为 number
+
+  id: number
+  // 定义对象属性 command_id，取值为 string
+
+  command_id: string
+  // 定义对象属性 device_id，取值为 number
+
+  device_id: number
+  // 定义对象属性 device_sn，取值为 string
+
+  device_sn: string
+  // 定义对象属性 cmd_type，取值为 string
+
+  cmd_type: string
+  // 定义对象属性 locker_no，取值为 string
+
+  locker_no: string
+  // 定义对象属性 payload，取值为 string
+
+  payload: string
+  // 定义对象属性 status，取值为 number // 0已下发 1成功 2失败 3超时/未发布
+
+  status: number
+  // 定义对象属性 response，取值为 string
+
+  response: string
+  // 定义对象属性 operator，取值为 string
+
+  operator: string
+  // 定义对象属性 created_at，取值为 string
+
+  created_at: string
+  // 定义对象属性 responded_at，取值为 string
+
+  responded_at?: string
+// 当前代码块结束
+
+}
+
+// IoT OTA 升级任务 @ticket B端-IoT中台
+// 导出 interface OtaTask {，供其他模块引用
+
+export interface OtaTask {
+  // 定义对象属性 id，取值为 number
+
+  id: number
+  // 定义对象属性 ota_id，取值为 string
+
+  ota_id: string
+  // 定义对象属性 device_id，取值为 number
+
+  device_id: number
+  // 定义对象属性 device_sn，取值为 string
+
+  device_sn: string
+  // 定义对象属性 firmware_version，取值为 string
+
+  firmware_version: string
+  // 定义对象属性 download_url，取值为 string
+
+  download_url: string
+  // 定义对象属性 md5，取值为 string
+
+  md5: string
+  // 定义对象属性 file_size，取值为 number
+
+  file_size: number
+  // 定义对象属性 force_upgrade，取值为 boolean
+
+  force_upgrade: boolean
+  // 定义对象属性 status，取值为 number // 0已下发 1下载中 2升级中 3成功 4失败
+
+  status: number
+  // 定义对象属性 progress，取值为 number
+
+  progress: number
+  // 定义对象属性 message，取值为 string
+
+  message: string
+  // 定义对象属性 operator，取值为 string
+
+  operator: string
+  // 定义对象属性 created_at，取值为 string
+
+  created_at: string
+// 当前代码块结束
+
+}
+
+// IoT 中台总览 @ticket B端-IoT中台
+// 导出 interface IotOverview {，供其他模块引用
+
+export interface IotOverview {
+  // 定义对象属性 devices，取值为 { total: number; online: number; offline: number; fault: number }
+
+  devices: { total: number; online: number; offline: number; fault: number }
+  // 定义对象属性 emqx，取值为 { status: string; broker: string }
+
+  emqx: { status: string; broker: string }
+  // 定义对象属性 commands_total，取值为 number
+
+  commands_total: number
+  // 定义对象属性 ota_total，取值为 number
+
+  ota_total: number
+  // 定义对象属性 topic_spec，取值为 Record<string, string>[]
+
+  topic_spec: Record<string, string>[]
+  // 定义对象属性 acl_spec，取值为 Record<string, string>[]
+
+  acl_spec: Record<string, string>[]
 // 当前代码块结束
 
 }

@@ -1,11 +1,14 @@
 // @ticket B端-存储层：内存仓储（事务快照+幂等键），生产可替换为 GORM 事务实现
 // 说明：为在没有真实DB/凭据时仍可 go run 演示B端四项功能，采用内存实现；
-//      字段语义与C端一致，种子数据均为演示占位（非真实业务指标）。
+//
+//	字段语义与C端一致，种子数据均为演示占位（非真实业务指标）。
 package store
 
 import (
 	"errors"
 	"sync"
+
+	"gorm.io/gorm"
 
 	"smart_lockers_admin/internal/model"
 )
@@ -21,26 +24,41 @@ var ErrIdempotent = errors.New("idempotent hit")
 type Store struct {
 	// 结构体字段 mu，类型为 sync.RWMutex
 
-	mu      sync.RWMutex
+	mu sync.RWMutex
 	// 结构体字段 sites，类型为 map[uint]*model.Site
 
-	sites   map[uint]*model.Site
+	sites map[uint]*model.Site
 	// 结构体字段 devices，类型为 map[uint]*model.Device
 
 	devices map[uint]*model.Device
 	// 结构体字段 recons，类型为 map[uint]*model.ReconcileRecord
 
-	recons  map[uint]*model.ReconcileRecord
+	recons map[uint]*model.ReconcileRecord
 	// 结构体字段 alarms，类型为 map[uint]*model.Alarm
 
-	alarms  map[uint]*model.Alarm
+	alarms map[uint]*model.Alarm
+	// 结构体字段 cmds，类型为 map[uint]*model.DeviceCommand；IoT 指令记录 @ticket B端-IoT中台
+
+	cmds map[uint]*model.DeviceCommand
+	// 结构体字段 otas，类型为 map[uint]*model.OtaTask；OTA 升级任务 @ticket B端-IoT中台
+
+	otas map[uint]*model.OtaTask
 	// 结构体字段 idem，类型为 map[string]bool
 
-	idem    map[string]bool
+	idem map[string]bool
 	// 结构体字段 nextID，类型为 uint
 
-	nextID  uint
-// 当前代码块结束
+	nextID uint
+	// 结构体字段 db，GORM 数据库句柄；nil 表示内存模式
+
+	db *gorm.DB
+	// 结构体字段 tx，当前事务句柄；仅 GORM 事务执行期间非空
+
+	tx *gorm.DB
+	// 结构体字段 txMu，串行化 GORM 事务，避免并发事务互相覆盖 tx 句柄
+
+	txMu sync.Mutex
+	// 当前代码块结束
 
 }
 
@@ -56,10 +74,13 @@ func New() *Store {
 		// 执行 recons: map[uint]*model.ReconcileRecord{}, alarms: map[uint]*model.Alarm{},，完成对应的业务处理
 
 		recons: map[uint]*model.ReconcileRecord{}, alarms: map[uint]*model.Alarm{},
+		// 执行 cmds: map[uint]*model.DeviceCommand{}, otas: map[uint]*model.OtaTask{},，完成对应的业务处理
+
+		cmds: map[uint]*model.DeviceCommand{}, otas: map[uint]*model.OtaTask{},
 		// 执行 idem: map[string]bool{}, nextID: 1,，完成对应的业务处理
 
 		idem: map[string]bool{}, nextID: 1,
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 	// 执行 s.seed()，完成对应的业务处理
@@ -68,7 +89,7 @@ func New() *Store {
 	// 返回 s 给调用方，结束当前函数
 
 	return s
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -89,6 +110,9 @@ func (s *Store) snapshot() *Store {
 		// 执行 recons: map[uint]*model.ReconcileRecord{}, alarms: map[uint]*model.Alarm{},，完成对应的业务处理
 
 		recons: map[uint]*model.ReconcileRecord{}, alarms: map[uint]*model.Alarm{},
+		// 执行 cmds: map[uint]*model.DeviceCommand{}, otas: map[uint]*model.OtaTask{},，完成对应的业务处理
+
+		cmds: map[uint]*model.DeviceCommand{}, otas: map[uint]*model.OtaTask{},
 		// 执行 idem: map[string]bool{}, nextID: s.nextID,，完成对应的业务处理
 
 		idem: map[string]bool{}, nextID: s.nextID,
@@ -97,23 +121,49 @@ func (s *Store) snapshot() *Store {
 	}
 	// 循环处理：for k, v := range s.sites { x := *v; c.sites[k] = &x }，逐轮迭代
 
-	for k, v := range s.sites { x := *v; c.sites[k] = &x }
+	for k, v := range s.sites {
+		x := *v
+		c.sites[k] = &x
+	}
 	// 循环处理：for k, v := range s.devices { x := *v; c.devices[k] = &x }，逐轮迭代
 
-	for k, v := range s.devices { x := *v; c.devices[k] = &x }
+	for k, v := range s.devices {
+		x := *v
+		c.devices[k] = &x
+	}
 	// 循环处理：for k, v := range s.recons { x := *v; c.recons[k] = &x }，逐轮迭代
 
-	for k, v := range s.recons { x := *v; c.recons[k] = &x }
+	for k, v := range s.recons {
+		x := *v
+		c.recons[k] = &x
+	}
 	// 循环处理：for k, v := range s.alarms { x := *v; c.alarms[k] = &x }，逐轮迭代
 
-	for k, v := range s.alarms { x := *v; c.alarms[k] = &x }
+	for k, v := range s.alarms {
+		x := *v
+		c.alarms[k] = &x
+	}
+	// 循环处理：for k, v := range s.cmds { x := *v; c.cmds[k] = &x }，逐轮迭代 @ticket B端-IoT中台
+
+	for k, v := range s.cmds {
+		x := *v
+		c.cmds[k] = &x
+	}
+	// 循环处理：for k, v := range s.otas { x := *v; c.otas[k] = &x }，逐轮迭代 @ticket B端-IoT中台
+
+	for k, v := range s.otas {
+		x := *v
+		c.otas[k] = &x
+	}
 	// 循环处理：for k, v := range s.idem { c.idem[k] = v }，逐轮迭代
 
-	for k, v := range s.idem { c.idem[k] = v }
+	for k, v := range s.idem {
+		c.idem[k] = v
+	}
 	// 返回 c 给调用方，结束当前函数
 
 	return c
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -123,7 +173,10 @@ func (s *Store) restore(c *Store) { // 须持锁
 	// 为 s.sites, s.devices, s.recons, s.alarms, s.idem, s.nextID 赋值：c.sites, c.devices, c.recons, c.alarms, c.idem, c.nextID
 
 	s.sites, s.devices, s.recons, s.alarms, s.idem, s.nextID = c.sites, c.devices, c.recons, c.alarms, c.idem, c.nextID
-// 当前代码块结束
+	// 为 s.cmds, s.otas 赋值：c.cmds, c.otas @ticket B端-IoT中台
+
+	s.cmds, s.otas = c.cmds, c.otas
+	// 当前代码块结束
 
 }
 
@@ -132,6 +185,29 @@ func (s *Store) restore(c *Store) { // 须持锁
 // 定义方法 Tx：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Tx(fn func() error) error {
+	// GORM 模式：用数据库事务承载闭包，NoLock 方法经 activeDB 复用同一事务句柄
+
+	if s.db != nil {
+		// 串行化事务，避免并发事务互相覆盖 s.tx 句柄
+
+		s.txMu.Lock()
+		// 函数返回前释放事务串行锁
+
+		defer s.txMu.Unlock()
+		// 开启数据库事务，闭包返回错误则整体回滚
+
+		return s.db.Transaction(func(tx *gorm.DB) error {
+			// 记录当前事务句柄，供 NoLock 方法读取
+
+			s.tx = tx
+			// 事务结束后清空事务句柄
+
+			defer func() { s.tx = nil }()
+			// 执行业务闭包，由 GORM 决定提交或回滚
+
+			return fn()
+		})
+	}
 	// 执行 s.mu.Lock()，完成对应的业务处理
 
 	s.mu.Lock()
@@ -150,13 +226,13 @@ func (s *Store) Tx(fn func() error) error {
 		// 返回 err 给调用方，结束当前函数
 
 		return err
-	// 当前代码块结束
+		// 当前代码块结束
 
 	}
 	// 返回 nil 给调用方，结束当前函数
 
 	return nil
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -164,19 +240,32 @@ func (s *Store) Tx(fn func() error) error {
 // 定义方法 CheckIdemNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) CheckIdemNoLock(key string) bool {
+	// GORM 模式：在当前（事务）句柄上完成幂等校验
+
+	if s.db != nil {
+		// 调用数据库幂等实现并返回结果
+
+		return checkIdemDB(s.activeDB(), key)
+		// 当前代码块结束
+
+	}
 	// 条件判断：key == "" { return false } 时执行下面逻辑
 
-	if key == "" { return false }
+	if key == "" {
+		return false
+	}
 	// 条件判断：s.idem[key] { return false } 时执行下面逻辑
 
-	if s.idem[key] { return false }
+	if s.idem[key] {
+		return false
+	}
 	// 为 s.idem[key] 赋值：true
 
 	s.idem[key] = true
 	// 返回 true 给调用方，结束当前函数
 
 	return true
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -184,13 +273,23 @@ func (s *Store) CheckIdemNoLock(key string) bool {
 // 定义方法 CheckIdem：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) CheckIdem(key string) bool {
+	// GORM 模式：改由数据库完成幂等校验
+
+	if s.db != nil {
+		// 调用数据库幂等实现并返回结果
+
+		return checkIdemDB(s.db, key)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 返回 s.CheckIdemNoLock(key) 给调用方，结束当前函数
 
 	return s.CheckIdemNoLock(key)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -198,94 +297,199 @@ func (s *Store) CheckIdem(key string) bool {
 // 定义方法 Sites：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Sites() []model.Site {
+	// GORM 模式：改由数据库读取全部网点
+
+	if s.db != nil {
+		// 从数据库读取网点列表并返回
+
+		return sitesDB(s.db)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.SitesNoLock() 给调用方，结束当前函数
 
 	return s.SitesNoLock()
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 SitesNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) SitesNoLock() []model.Site {
+	// GORM 模式：在当前句柄上读取网点
+
+	if s.db != nil {
+		// 从数据库读取网点列表并返回
+
+		return sitesDB(s.activeDB())
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 out，取值为 make([]model.Site, 0, len(s.sites))
 
 	out := make([]model.Site, 0, len(s.sites))
 	// 循环处理：for _, v := range s.sites { out = append(out, *v) }，逐轮迭代
 
-	for _, v := range s.sites { out = append(out, *v) }
+	for _, v := range s.sites {
+		out = append(out, *v)
+	}
 	// 返回 out 给调用方，结束当前函数
 
 	return out
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 Site：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Site(id uint) (model.Site, bool) {
+	// GORM 模式：改由数据库按主键读取网点
+
+	if s.db != nil {
+		// 从数据库读取网点并返回
+
+		return siteDB(s.db, id)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.SiteNoLock(id) 给调用方，结束当前函数
 
 	return s.SiteNoLock(id)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 SiteNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) SiteNoLock(id uint) (model.Site, bool) {
+	// GORM 模式：在当前句柄上按主键读取网点
+
+	if s.db != nil {
+		// 从数据库读取网点并返回
+
+		return siteDB(s.activeDB(), id)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.sites[id]; if !ok { return model.Site{}, false }
 
-	v, ok := s.sites[id]; if !ok { return model.Site{}, false }
+	v, ok := s.sites[id]
+	if !ok {
+		return model.Site{}, false
+	}
 	// 返回 *v, true 给调用方，结束当前函数
 
 	return *v, true
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AddSite：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) AddSite(v *model.Site) {
+	// GORM 模式：改由数据库写入网点
+
+	if s.db != nil {
+		// 调用数据库写入实现
+
+		addSiteDB(s.db, v)
+		// 返回，结束当前函数
+
+		return
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 执行 s.AddSiteNoLock(v)，完成对应的业务处理
 
 	s.AddSiteNoLock(v)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AddSiteNoLock：接收者 s *Store，实现该类型对应的业务行为
 
-func (s *Store) AddSiteNoLock(v *model.Site) { v.ID = s.allocID(); s.sites[v.ID] = v }
+func (s *Store) AddSiteNoLock(v *model.Site) {
+	// GORM 模式：在当前（事务）句柄上写入网点
+
+	if s.db != nil {
+		// 调用数据库写入实现
+
+		addSiteDB(s.activeDB(), v)
+		// 返回，结束当前函数
+
+		return
+		// 当前代码块结束
+
+	}
+	// 内存模式：分配自增 ID 并写入 map
+
+	v.ID = s.allocID()
+	s.sites[v.ID] = v
+}
+
 // 定义方法 UpdateSite：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateSite(id uint, mutate func(*model.Site) bool) bool {
+	// GORM 模式：改由数据库更新网点
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateSiteDB(s.db, id, mutate)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 返回 s.UpdateSiteNoLock(id, mutate) 给调用方，结束当前函数
 
 	return s.UpdateSiteNoLock(id, mutate)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 UpdateSiteNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateSiteNoLock(id uint, mutate func(*model.Site) bool) bool {
+	// GORM 模式：在当前句柄上更新网点
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateSiteDB(s.activeDB(), id, mutate)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.sites[id]; if !ok { return false }
 
-	v, ok := s.sites[id]; if !ok { return false }
+	v, ok := s.sites[id]
+	if !ok {
+		return false
+	}
 	// 条件判断：mutate(v) { v.UpdatedAt = now(); return true } 时执行下面逻辑
 
-	if mutate(v) { v.UpdatedAt = now(); return true }
+	if mutate(v) {
+		v.UpdatedAt = now()
+		return true
+	}
 	// 返回 false 给调用方，结束当前函数
 
 	return false
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -293,79 +497,154 @@ func (s *Store) UpdateSiteNoLock(id uint, mutate func(*model.Site) bool) bool {
 // 定义方法 Devices：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Devices(siteID uint) []model.Device {
+	// GORM 模式：改由数据库读取设备列表
+
+	if s.db != nil {
+		// 从数据库读取设备列表并返回
+
+		return devicesDB(s.db, siteID)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.DevicesNoLock(siteID) 给调用方，结束当前函数
 
 	return s.DevicesNoLock(siteID)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 DevicesNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) DevicesNoLock(siteID uint) []model.Device {
+	// GORM 模式：在当前句柄上读取设备列表
+
+	if s.db != nil {
+		// 从数据库读取设备列表并返回
+
+		return devicesDB(s.activeDB(), siteID)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 out，取值为 []model.Device{}
 
 	out := []model.Device{}
 	// 循环处理：for _, v := range s.devices { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }，逐轮迭代
 
-	for _, v := range s.devices { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }
+	for _, v := range s.devices {
+		if siteID == 0 || v.SiteID == siteID {
+			out = append(out, *v)
+		}
+	}
 	// 返回 out 给调用方，结束当前函数
 
 	return out
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 Device：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Device(id uint) (model.Device, bool) {
+	// GORM 模式：改由数据库按主键读取设备
+
+	if s.db != nil {
+		// 从数据库读取设备并返回
+
+		return deviceDB(s.db, id)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.DeviceNoLock(id) 给调用方，结束当前函数
 
 	return s.DeviceNoLock(id)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 DeviceNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) DeviceNoLock(id uint) (model.Device, bool) {
+	// GORM 模式：在当前句柄上按主键读取设备
+
+	if s.db != nil {
+		// 从数据库读取设备并返回
+
+		return deviceDB(s.activeDB(), id)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.devices[id]; if !ok { return model.Device{}, false }
 
-	v, ok := s.devices[id]; if !ok { return model.Device{}, false }
+	v, ok := s.devices[id]
+	if !ok {
+		return model.Device{}, false
+	}
 	// 返回 *v, true 给调用方，结束当前函数
 
 	return *v, true
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 UpdateDevice：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateDevice(id uint, mutate func(*model.Device) bool) bool {
+	// GORM 模式：改由数据库更新设备
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateDeviceDB(s.db, id, mutate)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 返回 s.UpdateDeviceNoLock(id, mutate) 给调用方，结束当前函数
 
 	return s.UpdateDeviceNoLock(id, mutate)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 UpdateDeviceNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateDeviceNoLock(id uint, mutate func(*model.Device) bool) bool {
+	// GORM 模式：在当前句柄上更新设备
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateDeviceDB(s.activeDB(), id, mutate)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.devices[id]; if !ok { return false }
 
-	v, ok := s.devices[id]; if !ok { return false }
+	v, ok := s.devices[id]
+	if !ok {
+		return false
+	}
 	// 条件判断：mutate(v) { v.UpdatedAt = now(); return true } 时执行下面逻辑
 
-	if mutate(v) { v.UpdatedAt = now(); return true }
+	if mutate(v) {
+		v.UpdatedAt = now()
+		return true
+	}
 	// 返回 false 给调用方，结束当前函数
 
 	return false
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -373,120 +652,248 @@ func (s *Store) UpdateDeviceNoLock(id uint, mutate func(*model.Device) bool) boo
 // 定义方法 Recons：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Recons(siteID uint) []model.ReconcileRecord {
+	// GORM 模式：改由数据库读取对账记录
+
+	if s.db != nil {
+		// 从数据库读取对账记录并返回
+
+		return reconsDB(s.db, siteID)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.ReconsNoLock(siteID) 给调用方，结束当前函数
 
 	return s.ReconsNoLock(siteID)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 ReconsNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) ReconsNoLock(siteID uint) []model.ReconcileRecord {
+	// GORM 模式：在当前句柄上读取对账记录
+
+	if s.db != nil {
+		// 从数据库读取对账记录并返回
+
+		return reconsDB(s.activeDB(), siteID)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 out，取值为 []model.ReconcileRecord{}
 
 	out := []model.ReconcileRecord{}
 	// 循环处理：for _, v := range s.recons { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }，逐轮迭代
 
-	for _, v := range s.recons { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }
+	for _, v := range s.recons {
+		if siteID == 0 || v.SiteID == siteID {
+			out = append(out, *v)
+		}
+	}
 	// 返回 out 给调用方，结束当前函数
 
 	return out
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AddRecon：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) AddRecon(v *model.ReconcileRecord) {
+	// GORM 模式：改由数据库写入对账记录
+
+	if s.db != nil {
+		// 调用数据库写入实现
+
+		addReconDB(s.db, v)
+		// 返回，结束当前函数
+
+		return
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 执行 s.AddReconNoLock(v)，完成对应的业务处理
 
 	s.AddReconNoLock(v)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AddReconNoLock：接收者 s *Store，实现该类型对应的业务行为
 
-func (s *Store) AddReconNoLock(v *model.ReconcileRecord) { v.ID = s.allocID(); s.recons[v.ID] = v }
+func (s *Store) AddReconNoLock(v *model.ReconcileRecord) {
+	// GORM 模式：在当前（事务）句柄上写入对账记录
+
+	if s.db != nil {
+		// 调用数据库写入实现
+
+		addReconDB(s.activeDB(), v)
+		// 返回，结束当前函数
+
+		return
+		// 当前代码块结束
+
+	}
+	// 内存模式：分配自增 ID 并写入 map
+
+	v.ID = s.allocID()
+	s.recons[v.ID] = v
+}
 
 // ---- 告警 ----
 // 定义方法 Alarms：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Alarms(siteID uint) []model.Alarm {
+	// GORM 模式：改由数据库读取告警列表
+
+	if s.db != nil {
+		// 从数据库读取告警列表并返回
+
+		return alarmsDB(s.db, siteID)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.AlarmsNoLock(siteID) 给调用方，结束当前函数
 
 	return s.AlarmsNoLock(siteID)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AlarmsNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) AlarmsNoLock(siteID uint) []model.Alarm {
+	// GORM 模式：在当前句柄上读取告警列表
+
+	if s.db != nil {
+		// 从数据库读取告警列表并返回
+
+		return alarmsDB(s.activeDB(), siteID)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 out，取值为 []model.Alarm{}
 
 	out := []model.Alarm{}
 	// 循环处理：for _, v := range s.alarms { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }，逐轮迭代
 
-	for _, v := range s.alarms { if siteID == 0 || v.SiteID == siteID { out = append(out, *v) } }
+	for _, v := range s.alarms {
+		if siteID == 0 || v.SiteID == siteID {
+			out = append(out, *v)
+		}
+	}
 	// 返回 out 给调用方，结束当前函数
 
 	return out
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 Alarm：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) Alarm(id uint) (model.Alarm, bool) {
+	// GORM 模式：改由数据库按主键读取告警
+
+	if s.db != nil {
+		// 从数据库读取告警并返回
+
+		return alarmDB(s.db, id)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.RLock(); defer s.mu.RUnlock()，完成对应的业务处理
 
-	s.mu.RLock(); defer s.mu.RUnlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	// 返回 s.AlarmNoLock(id) 给调用方，结束当前函数
 
 	return s.AlarmNoLock(id)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 AlarmNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) AlarmNoLock(id uint) (model.Alarm, bool) {
+	// GORM 模式：在当前句柄上按主键读取告警
+
+	if s.db != nil {
+		// 从数据库读取告警并返回
+
+		return alarmDB(s.activeDB(), id)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.alarms[id]; if !ok { return model.Alarm{}, false }
 
-	v, ok := s.alarms[id]; if !ok { return model.Alarm{}, false }
+	v, ok := s.alarms[id]
+	if !ok {
+		return model.Alarm{}, false
+	}
 	// 返回 *v, true 给调用方，结束当前函数
 
 	return *v, true
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 UpdateAlarm：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateAlarm(id uint, mutate func(*model.Alarm) bool) bool {
+	// GORM 模式：改由数据库更新告警
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateAlarmDB(s.db, id, mutate)
+		// 当前代码块结束
+
+	}
 	// 执行 s.mu.Lock(); defer s.mu.Unlock()，完成对应的业务处理
 
-	s.mu.Lock(); defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// 返回 s.UpdateAlarmNoLock(id, mutate) 给调用方，结束当前函数
 
 	return s.UpdateAlarmNoLock(id, mutate)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
+
 // 定义方法 UpdateAlarmNoLock：接收者 s *Store，实现该类型对应的业务行为
 
 func (s *Store) UpdateAlarmNoLock(id uint, mutate func(*model.Alarm) bool) bool {
+	// GORM 模式：在当前句柄上更新告警
+
+	if s.db != nil {
+		// 调用数据库更新实现并返回结果
+
+		return updateAlarmDB(s.activeDB(), id, mutate)
+		// 当前代码块结束
+
+	}
 	// 定义并初始化局部变量 v, ok，取值为 s.alarms[id]; if !ok { return false }
 
-	v, ok := s.alarms[id]; if !ok { return false }
+	v, ok := s.alarms[id]
+	if !ok {
+		return false
+	}
 	// 返回 mutate(v) 给调用方，结束当前函数
 
 	return mutate(v)
-// 当前代码块结束
+	// 当前代码块结束
 
 }
 
@@ -512,7 +919,7 @@ func (s *Store) seed() {
 		City: "上海", Address: "演示地址2", ManagerPhone: "13800138002", Status: 1, DoorTotal: 24, DoorFault: 1, CreatedAt: t, UpdatedAt: t}
 	// 为 s.devices[2001] 赋值：&model.Device{ID: 2001, SiteID: 1001, Code: "CAB-001", Type: "cabinet", Status: 0, LastHeartbeat: t, UpdatedAt: t}
 
-	s.devices[2001] = &model.Device{ID: 2001, SiteID: 1001, Code: "CAB-001", Type: "cabinet", Status: 0, LastHeartbeat: t, UpdatedAt: t}
+	s.devices[2001] = &model.Device{ID: 2001, SiteID: 1001, Code: "CAB-001", DeviceSN: "SL20240101001", Firmware: "v1.2.3", Type: "cabinet", Status: 0, LastHeartbeat: t, UpdatedAt: t}
 	// 为 s.devices[2002] 赋值：&model.Device{ID: 2002, SiteID: 1001, Code: "DOOR-001", Type: "door", Status: 2, LastHeartbeat: t, UpdatedAt: t}
 
 	s.devices[2002] = &model.Device{ID: 2002, SiteID: 1001, Code: "DOOR-001", Type: "door", Status: 2, LastHeartbeat: t, UpdatedAt: t}
@@ -525,6 +932,6 @@ func (s *Store) seed() {
 	// 为 s.nextID 赋值：4002
 
 	s.nextID = 4002
-// 当前代码块结束
+	// 当前代码块结束
 
 }

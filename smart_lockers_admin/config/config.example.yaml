@@ -30,3 +30,20 @@ policy:
   alarm_levels: "info,warn,critical"
   reconcile_tolerance_fen: 0
   audit_max_records: 500
+
+# GORM 真实数据库对接（默认 enable: false 走内存演示；置 true 后操作真正落库）@ticket B端-真实对接
+# 使用：复制本文件为 config.yaml，填好 dsn 并将 enable 置 true。禁止把真实密码提交仓库。
+db:
+  enable: false
+  dsn: "root:<PASSWORD>@tcp(127.0.0.1:13307)/smart_lockers?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime_sec: 3600
+
+# MQTT�豸�������ã�B��-IoT��̨����enabled=true ʱֱ�� EMQX �·� platform/# ָ����Ļ�ִ
+mqtt:
+  enabled: false
+  broker: "tcp://<MQTT_HOST>:1883"
+  client_id: "smart-lockers-admin"
+  username: "backend-service"
+  password: "<MQTT_PASSWORD>"

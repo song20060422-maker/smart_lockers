@@ -32,6 +32,36 @@ type Config struct {
 	// 结构体字段 Alipay，类型为 AlipayConfig，附带标签 `yaml:"alipay"`
 
 	Alipay   AlipayConfig   `yaml:"alipay"`
+	// 结构体字段 MQTT，类型为 MqttConfig，附带标签 `yaml:"mqtt"`；IoT 设备接入（工单 IoT-MQTT）
+
+	MQTT     MqttConfig     `yaml:"mqtt"`
+// 当前代码块结束
+
+}
+
+// MqttConfig MQTT 设备接入配置 @ticket IoT-MQTT设备接入
+// Enabled=false 或 Broker 不可达时自动降级为本地演示模式，保证 go run 可启动
+// 定义结构体 MqttConfig：用于承载一组相关的字段数据
+
+type MqttConfig struct {
+	// 结构体字段 Enabled，类型为 bool，附带标签 `yaml:"enabled"`；true 时连接 EMQX
+
+	Enabled bool `yaml:"enabled"`
+	// 结构体字段 Broker，类型为 string，附带标签 `yaml:"broker"`；EMQX 地址 tcp://host:1883
+
+	Broker string `yaml:"broker"`
+	// 结构体字段 ClientID，类型为 string，附带标签 `yaml:"client_id"`；后端服务客户端 ID
+
+	ClientID string `yaml:"client_id"`
+	// 结构体字段 Username，类型为 string，附带标签 `yaml:"username"`；ACL 后端服务用户名
+
+	Username string `yaml:"username"`
+	// 结构体字段 Password，类型为 string，附带标签 `yaml:"password"`；凭据仅写入 config.yaml（不入库）
+
+	Password string `yaml:"password"`
+	// 结构体字段 TokenExpireHours，类型为 int，附带标签 `yaml:"token_expire_hours"`；设备令牌有效期（方案默认 24h）
+
+	TokenExpireHours int `yaml:"token_expire_hours"`
 // 当前代码块结束
 
 }
@@ -230,6 +260,9 @@ func defaults() *Config {
 		// 执行 Alipay:   AlipayConfig{Sandbox: true},，完成对应的业务处理
 
 		Alipay:   AlipayConfig{Sandbox: true},
+		// 执行 MQTT:     MqttConfig{Enabled: false, Broker: "tcp://127.0.0.1:1883", ClientID: "smart-lockers-backend", Username: "backend-service", TokenExpireHours: 24},，完成对应的业务处理
+
+		MQTT:     MqttConfig{Enabled: false, Broker: "tcp://127.0.0.1:1883", ClientID: "smart-lockers-backend", Username: "backend-service", TokenExpireHours: 24},
 	// 当前代码块结束
 
 	}
